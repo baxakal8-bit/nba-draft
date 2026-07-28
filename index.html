@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>NBA Player Comparison</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>NBA Player Comparison</h1>
+
+    <p id="status">Loading data...</p>
+
+    <div id="pickers" hidden>
+      <div class="picker">
+        <input id="name-a" list="players-a" placeholder="Type a player" autocomplete="off" />
+        <select id="season-a"></select>
+      </div>
+      <div class="vs">vs</div>
+      <div class="picker">
+        <input id="name-b" list="players-b" placeholder="Type a player" autocomplete="off" />
+        <select id="season-b"></select>
+      </div>
+    </div>
+
+    <datalist id="players-a"></datalist>
+    <datalist id="players-b"></datalist>
+
+    <table id="compare" hidden>
+      <thead>
+        <tr>
+          <th id="head-a">—</th>
+          <th class="stat-name">Stat</th>
+          <th id="head-b">—</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <script src="main.js"></script>
+  </body>
+</html>
