@@ -12,10 +12,75 @@ var STATS = [
   { key: "ast_per_game", label: "Assists" },
   { key: "stl_per_game", label: "Steals" },
   { key: "blk_per_game", label: "Blocks" },
+  { key: "tov_per_game", label: "Turnovers", lowerIsBetter: true },
   { key: "fg_percent", label: "FG%", percent: true },
   { key: "x3p_percent", label: "3P%", percent: true },
   { key: "ft_percent", label: "FT%", percent: true },
 ];
+
+// --- The rating ------------------------------------------------------------
+//
+// Everything is measured in points of scoring margin. The anchor is that an
+// average NBA possession is worth about 1.15 points, so a possession changing
+// hands is worth 1.15 to one side and 1.15 to the other: 2.30 in total.
+//
+//   point    1.00  a point is a point
+//   assist   1.20  an assisted basket averages ~2.35, but that possession was
+//                  already worth 1.15 -- the passer added the difference
+//   oreb     1.68  0.73 x 2.30. The defence collects 73% of misses, so an
+//                  offensive board is the outcome that was NOT expected
+//   dreb     0.62  0.27 x 2.30. Mostly it just confirms what was already likely
+//   steal    2.30  a full, certain change of possession
+//   block    0.60  the shakiest of the six. The arithmetic says ~0.4, but real
+//                  models say ~0.6 because the shots never attempted against a
+//                  rim protector never show up in a box score
+//   turnover -2.30 a steal seen from the other side of the floor
+var WEIGHTS = {
+  pts_per_game: 1.0,
+  ast_per_game: 1.2,
+  orb_per_game: 1.68,
+  drb_per_game: 0.62,
+  stl_per_game: 2.3,
+  blk_per_game: 0.6,
+  tov_per_game: -2.3,
+};
+
+// Before 1974 the box score did not split rebounds, and steals and blocks were
+// not recorded at all. For those seasons total rebounds are all we have, so
+// they get the blend of the two weights above at a typical 28/72 split.
+var TRB_WEIGHT = 0.92;
+
+function number(row, key) {
+  var raw = row[key];
+  if (raw === undefined || raw === "" || raw === "NA") return null;
+  var value = parseFloat(raw);
+  return isNaN(value) ? null : value;
+}
+
+function rating(row) {
+  var total = 0;
+  var missing = [];
+
+  for (var key in WEIGHTS) {
+    var value = number(row, key);
+
+    if (value === null) {
+      // Rebounds have a fallback; steals and blocks do not.
+      if (key === "orb_per_game" || key === "drb_per_game") continue;
+      missing.push(key);
+      continue;
+    }
+
+    total += value * WEIGHTS[key];
+  }
+
+  // No split rebounds -- fall back to the total.
+  if (number(row, "orb_per_game") === null && number(row, "trb_per_game") !== null) {
+    total += number(row, "trb_per_game") * TRB_WEIGHT;
+  }
+
+  return { score: Math.round(total * 10) / 10, missing: missing };
+}
 
 // Every season row, grouped by player name.
 // { "Michael Jordan": [ {season: 1996, pts_per_game: 30.4, ...}, ... ] }
@@ -184,12 +249,52 @@ function render() {
     if (a && b) {
       var left = parseFloat(a[stat.key]);
       var right = parseFloat(b[stat.key]);
-      if (left > right) tr.children[0].className = "better";
-      if (right > left) tr.children[2].className = "better";
+      // Turnovers are the one row where the smaller number wins.
+      var leftWins = stat.lowerIsBetter ? left < right : left > right;
+      var rightWins = stat.lowerIsBetter ? right < left : right > left;
+      if (leftWins) tr.children[0].className = "better";
+      if (rightWins) tr.children[2].className = "better";
     }
 
     body.appendChild(tr);
   });
+
+  addRatingRow(body, a, b);
+}
+
+function addRatingRow(body, a, b) {
+  var scoreA = a ? rating(a) : null;
+  var scoreB = b ? rating(b) : null;
+
+  var tr = document.createElement("tr");
+  tr.className = "rating-row";
+  tr.innerHTML =
+    "<td>" + (scoreA ? scoreA.score : "—") + "</td>" +
+    "<td class='stat-name'>Impact Score</td>" +
+    "<td>" + (scoreB ? scoreB.score : "—") + "</td>";
+
+  if (scoreA && scoreB) {
+    if (scoreA.score > scoreB.score) tr.children[0].className = "better";
+    if (scoreB.score > scoreA.score) tr.children[2].className = "better";
+  }
+
+  body.appendChild(tr);
+
+  // Be honest when a rating is built on less than the full six stats.
+  var incomplete = [scoreA, scoreB].filter(function (s) {
+    return s && s.missing.length > 0;
+  });
+
+  var note = document.getElementById("note");
+  if (incomplete.length === 0) {
+    note.hidden = true;
+  } else {
+    note.hidden = false;
+    note.textContent =
+      "Steals and blocks were only recorded from 1974, turnovers from 1978. " +
+      "A rating from before then is missing part of the formula. It loses the " +
+      "credit for steals and blocks, but it also escapes the turnover penalty.";
+  }
 }
 
 // --- Wiring ----------------------------------------------------------------

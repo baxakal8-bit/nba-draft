@@ -11,7 +11,13 @@ yaptık: iki oyuncu + sezon seçiliyor, maç başına istatistikleri yan yana
 denedim, bağlantıyı yüzüme kapattı (ERR_CONNECTION_RESET). Kaggle sayfası
 da açılmadı (ChunkLoadError). İkisini de aşamadık, başka yoldan gittik.
 
-**Yarım kalan:** Overall rating formülü — "kim daha iyi" skoru.
+**Yarım kalan:** Yok — kapatmak üzereyken formüle de girdik ve bitirdik.
+Impact Score çalışıyor. Ağırlıkları possession mantığıyla ben kurdum:
+possession başına ortalama 1.15 sayı, possession el değiştirmesi 2.30.
+Buradan asist 1.20, oreb 1.68, dreb 0.62, çalma 2.30, blok 0.60,
+top kaybı -2.30. Blok ağırlığından emin değilim, orası tahmin.
+Şut yüzdelerini hesaba katmayı denedik ama her denemede başka bir şey
+bozuldu, o yüzden basit halde bıraktık ve sayfada açıkça yazdık.
 
 **Babama sorum:** yok
 
@@ -19,6 +25,9 @@ da açılmadı (ChunkLoadError). İkisini de aşamadık, başka yoldan gittik.
 
 **Kavram kontrolü:**
 - Neden API yerine dosya? → bilemedi, konuştuk 🔸
+- Ağırlıklar neden lazım? → kendi buldu, sorulmadan söyledi ✅
+- Top kaybı ağırlığı? → kendi türetti (-2.30) ✅
+- Points per possession mantığı? → çalma ve top kaybında kendi kurdu ✅
 
 ---
 # Kavramlar
@@ -28,3 +37,7 @@ da açılmadı (ChunkLoadError). İkisini de aşamadık, başka yoldan gittik.
 - CORS / ERR_CONNECTION_RESET — 28 Tem 🔸
 - fetch — 28 Tem 🔸
 - statik veri seti vs canlı API — 28 Tem 🔸
+- points per possession — 28 Tem ✅
+- ağırlıklandırma (weights) — 28 Tem ✅
+- marjinal değer ("olmasaydı ne olurdu") — 28 Tem 🔸
+- shot creation / usage — 28 Tem 🔸

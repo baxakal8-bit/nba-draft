@@ -21,10 +21,18 @@
       → `data/player-per-game.csv`, 1947-2026, 33,340 rows
       → source: github.com/sumitrodatta/bball-reference-datasets
 - [x] Load it in the browser and print the raw CSV to the console
-- [ ] Turn the CSV text into a usable list of players
-- [ ] Pick two players from a list
-- [ ] Show their per-game stats side by side
-- [ ] Invent a "who's better" score and explain how it works
+- [x] Turn the CSV text into a usable list of players
+- [x] Pick two players from a list
+- [x] Show their per-game stats side by side
+- [x] Invent a "who's better" score and explain how it works
+      → Impact Score. Everything is measured in points of scoring margin,
+        anchored on an average possession being worth 1.15 points.
+        point 1.0 · assist 1.20 · oreb 1.68 · dreb 0.62 · steal 2.30 ·
+        block 0.60 · turnover -2.30
+      → Known hole: shooting percentages are ignored, so a high-volume,
+        low-efficiency scorer reads too high. Tried two fixes (penalise
+        missed shots, penalise attempts) -- each one broke something else,
+        so v1 keeps the simple version and says so on the page.
 
 ## LATER (not in v1)
 
