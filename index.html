@@ -38,8 +38,15 @@
 
     <p id="about">
       <strong>Impact Score</strong> — roughly the points a player generates
-      minus the points he gives away. It does not look at shooting percentages,
-      so a high-volume, low-efficiency scorer reads higher than he should.
+      minus the points he gives away. Scoring is weighted by effective field
+      goal percentage, so 30 points on 20 shots counts for more than 30 points
+      on 30 shots, and a three counts as a three. On top of that, award voting
+      adds up to eight points: five for MVP, three for Defensive Player of the
+      Year, scaled by the share of the vote a player won.
+      The box score part still cannot tell who created a shot and who was set
+      up for it, which flatters players fed easy baskets by someone else. And
+      because the voting is now an input, this score can no longer be used to
+      judge how well the formula predicts that voting.
     </p>
 
     <p id="note" hidden></p>

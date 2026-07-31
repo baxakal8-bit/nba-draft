@@ -1,3 +1,41 @@
+## 2026-08-01 — 2. oturum
+**Bugünün işi:** Formüldeki şut verimliliği açığını kapatmak
+
+**Ne yaptım:** Sayının ağırlığını sabit 1.0 olmaktan çıkarıp şut yüzdesiyle
+çarpmayı ben önerdim. Önce fg% denedik ama üçlük atanları cezalandırıyordu,
+çünkü fg% girmiş bir üçlüğü de bir sayıyor. TS% ile eFG% arasında kaldık,
+eFG%'i seçtim. 1980 öncesinde üçlük olmadığı için o sezonlarda eFG% ile fg%
+aynı sayı — böylece herkes tek cetvelle ölçülüyor.
+
+Sonra formülü MVP oylamasıyla sınadık: 70 sezonda benim 1. sıradaki oyuncum
+29 kere gerçek MVP çıktı (%41), gerçek MVP 59 kere ilk 5'imdeydi (%84).
+
+Son olarak MVP ve DPOY oylarını skora bonus olarak ekledim (tavan 5 ve 3).
+Gobert nihayet savunması için puan alıyor.
+
+**Ne bozdum / yanlış yaptım:** MVP oyunu formüle koymak istedim, Claude
+"o zaman testin anlamı kalmaz" dedi, anlamadım, ısrar ettim. Sonunda ayrı
+tutarak çözdük. Ayrıca asist ağırlığını gerçek veriyle değiştirmeyi denedik
+ama sonuç neredeyse değişmedi, veri de 1997'de başlıyordu — vazgeçtim.
+
+**Yarım kalan:** Ağırlık testleri. Yarın altı ağırlığı oynatıp %41'i
+yükseltmeye çalışacağız. Dikkat edilecek şey overfitting.
+
+**Babama sorum:** yok
+
+**Keyif:** evet
+
+**Kavram kontrolü:**
+- Port nedir? → kendi cümleleriyle anlattı ✅
+  "Port, bilgisayara veri gelince hangi programa gideceğini bilmesi için
+  yardımcı olan bir adres."
+  Benzetmeyi de kendi kurdu, söylenmeden: **IP sokak, port ev numarası.**
+  Eksik kalan tek yer: alan adının arka planda porta değil IP'ye
+  dönüştüğü (DNS), portun ise `https://` kısmından geldiği (443).
+- Cevap anahtarını formüle koymak neden bozar? → zorlandı, konuştuk 🔸
+
+---
+
 ## 2026-07-28 — 1. oturum
 **Bugünün işi:** Veri kaynağını bulmak ve indirmek
 
@@ -41,3 +79,8 @@ bozuldu, o yüzden basit halde bıraktık ve sayfada açıkça yazdık.
 - ağırlıklandırma (weights) — 28 Tem ✅
 - marjinal değer ("olmasaydı ne olurdu") — 28 Tem 🔸
 - shot creation / usage — 28 Tem 🔸
+- eFG% / TS% — 1 Ağu ✅
+- port — 1 Ağu ✅ (benzetmeyi kendi kurdu)
+- DNS — 1 Ağu 🔸
+- cevap anahtarını girdi yapmak (circularity) — 1 Ağu 🔸
+- overfitting — 1 Ağu (yarın)
