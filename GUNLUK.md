@@ -1,3 +1,44 @@
+## 2026-08-02 — 3. oturum
+**Bugünün işi:** Ağırlık testleri
+
+**Ne yaptım:** Ağırlıkları deneyen bir arama algoritması yazdık
+(`tools/tune.js`). Sezonları ikiye böldü, yarısında ağırlıkları ayarladı,
+diğer yarısında sınadı. Bulduğu ağırlıklar MVP'yi 29 yerine 35 sezonda
+tutturuyordu ama blok ağırlığını sıfıra indirmişti. Ben bunun savunma
+oyuncularını bozacağını ölçmeden önce söyledim, sonra DPOY pusulasında
+ölçtük ve haklı çıktım (%58.6 → %56.6). Kendi ağırlıklarımda kaldım.
+Yayınlanmış iki formülle de karşılaştırdık (Game Score, Win Score) —
+benimkiler onlarla başa baş.
+
+Sonra sırayla: Win Shares'i skora ekledim (çeyreği), All-NBA ve
+All-Defensive takımlarını ekledim (All-NBA 3 / 2.25 / 1.75, All-Defensive
+2 / 1.5), "Impact Score" adını "Score" yaptım, sayfayı koyu tasarıma
+çevirdim, ve tarayıcının kendi dropdown'larını atıp kendi yazdığımız
+bileşenle değiştirdik.
+
+**Ne bozdum / yanlış yaptım:** Kodu Claude yazdığı için takıldığım bir yer
+olmadı, ama en baştaki planların bir kısmını anlamadım — özellikle
+sezonları ikiye bölme fikrini ve MVP oyunu formüle koyunca testin neden
+bozulduğunu. Sayı görünce oturdu, anlatımla olmadı.
+
+Bir de ödül bonusu eklerken Gobert 2025'in "0%" görünmesini fark ettim.
+Meğer oy almış ama binde iki, yuvarlanınca sıfır çıkıyormuş. `<1%` yaptık.
+
+**Yarım kalan:** Yok.
+
+**Babama sorum:** yok
+
+**Keyif:** evet
+
+**Kavram kontrolü:**
+- Ölçtüğün şeyi iyileştirirsin, ölçmediğin bozulur → ölçmeden kendi buldu ✅
+- `ws` mi `ws / takım galibiyeti` mi → kendi düzeltti, "maç kazandırmak"
+  dediği şeyin `ws` olduğunu gördü ✅
+- Dropdown'daki sonsuz döngü → bilemedi, konuştuk 🔸
+- Overfitting / sezonları ikiye bölmek → anlamadı, Claude karar verdi 🔸
+
+---
+
 ## 2026-08-01 — 2. oturum
 **Bugünün işi:** Formüldeki şut verimliliği açığını kapatmak
 
@@ -83,4 +124,8 @@ bozuldu, o yüzden basit halde bıraktık ve sayfada açıkça yazdık.
 - port — 1 Ağu ✅ (benzetmeyi kendi kurdu)
 - DNS — 1 Ağu 🔸
 - cevap anahtarını girdi yapmak (circularity) — 1 Ağu 🔸
-- overfitting — 1 Ağu (yarın)
+- overfitting — 2 Ağu 🔸
+- proxy metrik tuzağı (ölçtüğünü iyileştirir, ölçmediğini bozar) — 2 Ağu ✅
+- Win Shares — 2 Ağu ✅
+- box-sizing — 2 Ağu 🔸
+- olay döngüsü (bir olayın tepkisi kendini tetiklemesi) — 2 Ağu 🔸
