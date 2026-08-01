@@ -259,74 +259,87 @@ function dropPartialSeasons(seasons) {
   });
 }
 
-// --- Filling the inputs ----------------------------------------------------
-
-// Every player name, sorted. Filled once, then filtered as the user types.
-var allNames = [];
+// --- The two pickers -------------------------------------------------------
 
 // Suggestions stay hidden until this many characters are typed. With ~4900
 // names, anything shorter matches half the league and helps nobody.
 var MIN_CHARS = 3;
 var MAX_SUGGESTIONS = 20;
 
+// { a: { name: dropdown, season: dropdown }, b: {...} }
+var pickers = {};
+
 function fillPlayerList() {
-  allNames = Object.keys(playersByName).sort();
-}
-
-function updateSuggestions(side) {
-  var raw = document.getElementById("name-" + side).value;
-  var list = document.getElementById("players-" + side);
-  list.innerHTML = "";
-
-  // Spaces count toward the threshold: "de " is three characters typed.
-  if (raw.length < MIN_CHARS) return;
-
-  var typed = raw.trim().toLowerCase();
-  if (typed === "") return;
-
-  var matches = allNames
-    .filter(function (name) {
-      return name.toLowerCase().indexOf(typed) !== -1;
+  // Sorted by how long a career the player had. There is no fame column in
+  // the data, but games played is a fair stand-in: the Jordan you are typing
+  // is the one who played 1072 games, not the one who played 30.
+  var names = Object.keys(playersByName)
+    .map(function (name) {
+      var games = 0;
+      playersByName[name].forEach(function (row) {
+        games += number(row, "g") || 0;
+      });
+      return { value: name, label: name, games: games };
     })
-    .slice(0, MAX_SUGGESTIONS);
+    .sort(function (a, b) {
+      if (b.games !== a.games) return b.games - a.games;
+      return a.label < b.label ? -1 : 1;
+    });
 
-  matches.forEach(function (name) {
-    var option = document.createElement("option");
-    option.value = name;
-    list.appendChild(option);
+  ["a", "b"].forEach(function (side) {
+    var name = createDropdown(document.getElementById("name-" + side), {
+      editable: true,
+      placeholder: "Type a player",
+      minChars: MIN_CHARS,
+      maxVisible: MAX_SUGGESTIONS,
+      onSelect: function () {
+        fillSeasons(side);
+        render();
+      },
+    });
+
+    var season = createDropdown(document.getElementById("season-" + side), {
+      editable: false,
+      placeholder: "Season",
+      onSelect: render,
+    });
+
+    season.disable(true);
+    name.setItems(names);
+    pickers[side] = { name: name, season: season };
   });
 }
 
 function fillSeasons(side) {
-  var name = document.getElementById("name-" + side).value;
-  var seasonBox = document.getElementById("season-" + side);
-  seasonBox.innerHTML = "";
+  var seasons = playersByName[pickers[side].name.getValue()];
+  var box = pickers[side].season;
 
-  var seasons = playersByName[name];
-  if (!seasons) return;
+  if (!seasons) {
+    box.setItems([]);
+    box.disable(true);
+    return;
+  }
 
-  // Newest season first.
-  seasons
-    .slice()
-    .sort(function (a, b) {
-      return b.season - a.season;
-    })
-    .forEach(function (row) {
-      var option = document.createElement("option");
-      option.value = row.season;
-      option.textContent = row.season + " " + row.team;
-      seasonBox.appendChild(option);
-    });
+  box.setItems(
+    seasons
+      .slice()
+      .sort(function (a, b) {
+        return b.season - a.season; // newest first
+      })
+      .map(function (row) {
+        return { value: row.season, label: row.season + " " + row.team };
+      })
+  );
+  box.disable(false);
 }
 
 // --- Showing the comparison ------------------------------------------------
 
 function findSeason(side) {
-  var name = document.getElementById("name-" + side).value;
-  var season = document.getElementById("season-" + side).value;
-  var seasons = playersByName[name];
+  var seasons = playersByName[pickers[side].name.getValue()];
   if (!seasons) return null;
 
+  var season = pickers[side].season.getValue();
   return seasons.filter(function (row) {
     return row.season === season;
   })[0];
@@ -500,17 +513,5 @@ function addRatingRow(body, a, b) {
   }
 }
 
-// --- Wiring ----------------------------------------------------------------
-
-["a", "b"].forEach(function (side) {
-  var nameBox = document.getElementById("name-" + side);
-
-  nameBox.addEventListener("input", function () {
-    updateSuggestions(side);
-  });
-  nameBox.addEventListener("change", function () {
-    fillSeasons(side);
-    render();
-  });
-  document.getElementById("season-" + side).addEventListener("change", render);
-});
+// The dropdowns carry their own wiring: fillPlayerList() builds them once the
+// data has loaded, and each one calls back into render() when it changes.
