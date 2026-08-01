@@ -1,4 +1,4 @@
-// The Impact Score, box score half.
+// The Score, box score half.
 //
 // This file is shared: index.html loads it for the page, and tools/tune.js
 // loads it in node when searching for better weights. Keeping one copy means

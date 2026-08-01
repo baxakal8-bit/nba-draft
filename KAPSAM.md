@@ -25,7 +25,7 @@
 - [x] Pick two players from a list
 - [x] Show their per-game stats side by side
 - [x] Invent a "who's better" score and explain how it works
-      → Impact Score. Everything is measured in points of scoring margin,
+      → Score. Everything is measured in points of scoring margin,
         anchored on an average possession being worth 1.15 points.
         assist 1.20 · oreb 1.68 · dreb 0.62 · steal 2.30 · block 0.60 ·
         turnover -2.30. Scoring is not a flat weight: points are multiplied
@@ -37,7 +37,9 @@
         (raw points let Westbrook outrank Jordan; penalising misses let
         efficiency run away; penalising attempts put Gobert level with
         Jordan). Weighting points by FG% fixed both, but punished three-point
-        shooters, so it became True Shooting.
+        shooters, so it became eFG%. True Shooting was the other candidate;
+        eFG% won because it separates Curry from Westbrook more cleanly, and
+        because the gap it leaves before 1980 is fillable exactly.
       → Still open: shot creation. The box score cannot tell a player who
         makes his own shot from one who is set up for it.
 - [x] Add award-vote bonuses on top of the box score
@@ -131,7 +133,7 @@ was never available.
     A way into the two things the formula still cannot see: who creates a
     shot, and who defends.
   - `Player Award Shares.csv` → MVP voting. Not an input to the formula but a
-    way to test it: does the Impact Score ranking agree with how the season
+    way to test it: does the Score ranking agree with how the season
     was actually judged?
   - `Player Shooting.csv` → shot distance, dunks, and `percent_assisted_x2p_fg`.
     Set aside for now: most baskets are assisted for most players, so it may

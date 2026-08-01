@@ -370,7 +370,7 @@ function addRatingRow(body, a, b) {
   tr.className = "rating-row";
   tr.innerHTML =
     "<td>" + (totalA === null ? "—" : totalA) + "</td>" +
-    "<td class='stat-name'>Impact Score</td>" +
+    "<td class='stat-name'>Score</td>" +
     "<td>" + (totalB === null ? "—" : totalB) + "</td>";
 
   if (totalA !== null && totalB !== null) {
