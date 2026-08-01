@@ -173,17 +173,6 @@ td.better {
 
 /* --- the small print --- */
 
-#verdict {
-  margin-top: 30px;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--text);
-}
-
-#verdict strong {
-  color: var(--accent);
-}
-
 #about,
 #note {
   margin-top: 28px;
