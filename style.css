@@ -1,97 +1,191 @@
+:root {
+  --bg: #0b0f17;
+  --panel: #131926;
+  --line: #1f2937;
+  --text: #e8ecf3;
+  --muted: #7d8797;
+  --accent: #ff6b1a;
+  --gold: #f5c451;
+}
+
 body {
-  font-family: system-ui, sans-serif;
-  max-width: 640px;
-  margin: 40px auto;
-  padding: 0 16px;
-  color: #16181d;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1 {
-  font-size: 1.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 32px;
 }
+
+#status {
+  color: var(--muted);
+}
+
+/* --- the two pickers --- */
 
 #pickers {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 36px;
 }
 
 .picker {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
+  min-width: 0;
 }
 
 .vs {
-  color: #8a8f98;
-  font-size: 0.85rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-top: 4px;
 }
 
 input,
 select {
   font: inherit;
-  padding: 6px 8px;
-  border: 1px solid #d0d3d9;
-  border-radius: 6px;
-  background: #fff;
+  font-size: 0.95rem;
   width: 100%;
+  padding: 10px 12px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  appearance: none;
 }
+
+input::placeholder {
+  color: var(--muted);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+select {
+  cursor: pointer;
+}
+
+/* --- the comparison --- */
 
 table {
   width: 100%;
   border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
 }
 
-th,
-td {
-  padding: 8px 10px;
+thead th {
+  padding: 0 12px 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   text-align: center;
-  border-bottom: 1px solid #eceef1;
+  border-bottom: 1px solid var(--line);
 }
 
-th {
-  font-size: 0.9rem;
+.season {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--muted);
 }
 
+thead th.stat-name {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+td {
+  padding: 11px 12px;
+  text-align: center;
+  font-size: 1.05rem;
+  border-bottom: 1px solid rgba(31, 41, 55, 0.55);
+}
+
+/* The middle column names the stat, so it stays quiet. */
 .stat-name {
-  color: #8a8f98;
-  font-weight: 400;
-  font-size: 0.85rem;
-  width: 34%;
+  width: 36%;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
+td.better {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* The score is the answer to the question the page asks, so it gets to be
+   three times the size of everything else. */
 .rating-row td {
-  border-top: 2px solid #16181d;
+  border-top: 1px solid var(--line);
   border-bottom: none;
-  font-size: 1.15rem;
-  padding-top: 12px;
+  padding-top: 22px;
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-#about,
-#note {
-  margin-top: 20px;
-  font-size: 0.85rem;
-  color: #8a8f98;
-  line-height: 1.5;
+.rating-row td.stat-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
 }
 
 .won {
   display: inline-block;
-  margin-left: 4px;
-  padding: 1px 5px;
+  margin-left: 6px;
+  padding: 2px 6px;
   border-radius: 4px;
-  background: #f0e2b6;
-  color: #6b5312;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  background: rgba(245, 196, 81, 0.14);
+  color: var(--gold);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  vertical-align: 1px;
+  vertical-align: 2px;
 }
 
-td.better {
-  font-weight: 700;
-  color: #1b6b3a;
+/* --- the small print --- */
+
+#about,
+#note {
+  margin-top: 28px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+#about strong {
+  color: var(--text);
+}
+
+#note {
+  padding-left: 12px;
+  border-left: 2px solid var(--line);
 }

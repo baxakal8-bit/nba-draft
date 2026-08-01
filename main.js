@@ -332,6 +332,11 @@ function findSeason(side) {
   })[0];
 }
 
+function playerHeading(row) {
+  if (!row) return "—";
+  return row.player + "<span class='season'>" + row.season + " " + row.team + "</span>";
+}
+
 function formatPlace(place) {
   // null: the honour did not exist that season. "": it existed, he missed it.
   if (place === null) return "—";
@@ -365,8 +370,8 @@ function render() {
   var a = findSeason("a");
   var b = findSeason("b");
 
-  document.getElementById("head-a").textContent = a ? a.player + " " + a.season : "—";
-  document.getElementById("head-b").textContent = b ? b.player + " " + b.season : "—";
+  document.getElementById("head-a").innerHTML = playerHeading(a);
+  document.getElementById("head-b").innerHTML = playerHeading(b);
 
   var body = document.getElementById("rows");
   body.innerHTML = "";
