@@ -79,13 +79,19 @@ function createDropdown(host, options) {
     return starts.concat(contains).slice(0, maxVisible);
   }
 
+  // The option elements currently on screen. Kept so that moving the mouse or
+  // pressing an arrow key can just move the highlight. Rebuilding the list on
+  // hover destroys the element under the pointer, the replacement fires its
+  // own mouseenter, and the two chase each other -- clicks never land.
+  var optionEls = [];
+
   function paintList() {
     list.innerHTML = "";
+    optionEls = [];
 
     shown.forEach(function (item, index) {
       var option = document.createElement("div");
       option.className = "combo-option";
-      if (index === active) option.classList.add("is-active");
       if (item.value === value) option.classList.add("is-chosen");
       option.textContent = item.label;
 
@@ -96,10 +102,19 @@ function createDropdown(host, options) {
       });
       option.addEventListener("mouseenter", function () {
         active = index;
-        paintList();
+        paintActive();
       });
 
+      optionEls.push(option);
       list.appendChild(option);
+    });
+
+    paintActive();
+  }
+
+  function paintActive() {
+    optionEls.forEach(function (option, index) {
+      option.classList.toggle("is-active", index === active);
     });
   }
 
@@ -139,7 +154,7 @@ function createDropdown(host, options) {
   function move(step) {
     if (!open) return show();
     active = (active + step + shown.length) % shown.length;
-    paintList();
+    paintActive();
     scrollToActive();
   }
 

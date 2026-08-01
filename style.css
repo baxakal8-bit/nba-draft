@@ -67,6 +67,9 @@ h1 {
   font: inherit;
   font-size: 0.95rem;
   width: 100%;
+  /* Browsers give <input> and <button> different box-sizing by default, so
+     without this the name box is 48px wider than the season box under it. */
+  box-sizing: border-box;
   padding: 10px 34px 10px 12px;
   color: var(--text);
   background: var(--panel);
