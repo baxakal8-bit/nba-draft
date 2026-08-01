@@ -82,7 +82,7 @@ var HONOURS = [
   {
     type: "All-Defense",
     label: "All-Defensive",
-    bonus: { "1st": 2, "2nd": 1 },
+    bonus: { "1st": 2, "2nd": 1.5 },
   },
 ];
 
