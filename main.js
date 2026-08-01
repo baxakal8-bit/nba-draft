@@ -68,6 +68,45 @@ var awardWinners = {};
 // being snubbed, and the page has to show the difference.
 var votedSeasons = {};
 
+// End of season honours. MVP goes to one player a year; All-NBA goes to
+// fifteen, so this reaches a lot of very good seasons the award votes miss.
+//
+// The gap between the 2nd and 3rd teams is deliberately small. Being left off
+// the 2nd team is often one voter's opinion, not a real drop in quality.
+var HONOURS = [
+  {
+    type: "All-NBA",
+    label: "All-NBA",
+    bonus: { "1st": 3, "2nd": 2.25, "3rd": 1.75 },
+  },
+  {
+    type: "All-Defense",
+    label: "All-Defensive",
+    bonus: { "1st": 2, "2nd": 1 },
+  },
+];
+
+// { "All-NBA": { "curryst01|2016": "1st" }, "All-Defense": { ... } }
+var honours = {};
+
+// Which seasons each honour was actually picked. All-Defense only starts in
+// 1969, so a 1962 season has no team rather than a player left off it.
+var honourSeasons = {};
+
+function honour(row, type) {
+  if (!honourSeasons[type] || !honourSeasons[type][row.season]) return null;
+  return honours[type][row.player_id + "|" + row.season] || "";
+}
+
+function honourBonus(row) {
+  var total = 0;
+  HONOURS.forEach(function (h) {
+    var place = honour(row, h.type);
+    if (place) total += h.bonus[place] || 0;
+  });
+  return total;
+}
+
 // Win Shares, keyed by "player_id|season|team". Basketball Reference's own
 // estimate of how many of his team's wins a player was responsible for.
 var winShares = {};
@@ -87,11 +126,15 @@ Promise.all([
   fetch("data/player-advanced.csv").then(function (r) {
     return r.text();
   }),
+  fetch("data/end-of-season-teams.csv").then(function (r) {
+    return r.text();
+  }),
 ])
   .then(function (files) {
     buildPlayerIndex(files[0]);
     buildAwardIndex(files[1]);
     buildWinShareIndex(files[2]);
+    buildHonourIndex(files[3]);
     fillPlayerList();
     document.getElementById("status").hidden = true;
     document.getElementById("pickers").hidden = false;
@@ -164,6 +207,29 @@ function buildWinShareIndex(csv) {
     // Team is part of the key because a traded player has one row per team
     // plus a combined one, exactly like the per-game file.
     winShares[row.player_id + "|" + row.season + "|" + row.team] = ws;
+  }
+}
+
+function buildHonourIndex(csv) {
+  var lines = csv.trim().split("\n");
+  var columns = lines[0].split(",");
+  var wanted = {};
+
+  HONOURS.forEach(function (h) {
+    wanted[h.type] = true;
+    honours[h.type] = {};
+    honourSeasons[h.type] = {};
+  });
+
+  for (var i = 1; i < lines.length; i++) {
+    var row = rowToObject(lines[i].split(","), columns);
+    if (row.lg !== "NBA") continue;
+
+    // All-Rookie is in this file too. It rewards being new, not being good.
+    if (!wanted[row.type]) continue;
+
+    honourSeasons[row.type][row.season] = true;
+    honours[row.type][row.player_id + "|" + row.season] = row.number_tm;
   }
 }
 
@@ -266,6 +332,13 @@ function findSeason(side) {
   })[0];
 }
 
+function formatPlace(place) {
+  // null: the honour did not exist that season. "": it existed, he missed it.
+  if (place === null) return "—";
+  if (place === "") return "no";
+  return place + " team";
+}
+
 function formatShare(share, row, award) {
   // null means the season has not been voted on yet, which is not zero votes.
   if (share === null) return "—";
@@ -347,6 +420,27 @@ function addRatingRow(body, a, b) {
     body.appendChild(voteRow);
   });
 
+  HONOURS.forEach(function (h) {
+    var placeA = a ? honour(a, h.type) : null;
+    var placeB = b ? honour(b, h.type) : null;
+
+    // Nothing to say when neither player made the team.
+    if (!placeA && !placeB) return;
+
+    var row = document.createElement("tr");
+    row.innerHTML =
+      "<td>" + formatPlace(placeA) + "</td>" +
+      "<td class='stat-name'>" + h.label + "</td>" +
+      "<td>" + formatPlace(placeB) + "</td>";
+
+    var valueA = placeA ? h.bonus[placeA] || 0 : 0;
+    var valueB = placeB ? h.bonus[placeB] || 0 : 0;
+    if (valueA > valueB) row.children[0].className = "better";
+    if (valueB > valueA) row.children[2].className = "better";
+
+    body.appendChild(row);
+  });
+
   var wsA = a ? winShare(a) : null;
   var wsB = b ? winShare(b) : null;
 
@@ -363,8 +457,12 @@ function addRatingRow(body, a, b) {
     body.appendChild(wsRow);
   }
 
-  var totalA = scoreA ? Math.round((scoreA.score + awardBonus(a) + (wsA || 0) * WS_WEIGHT) * 10) / 10 : null;
-  var totalB = scoreB ? Math.round((scoreB.score + awardBonus(b) + (wsB || 0) * WS_WEIGHT) * 10) / 10 : null;
+  var totalA = scoreA
+    ? Math.round((scoreA.score + awardBonus(a) + honourBonus(a) + (wsA || 0) * WS_WEIGHT) * 10) / 10
+    : null;
+  var totalB = scoreB
+    ? Math.round((scoreB.score + awardBonus(b) + honourBonus(b) + (wsB || 0) * WS_WEIGHT) * 10) / 10
+    : null;
 
   var tr = document.createElement("tr");
   tr.className = "rating-row";

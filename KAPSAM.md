@@ -90,6 +90,22 @@
       → Like the award bonuses, this is added outside `rating()`. The tuning
         tools still see a clean box score formula.
 
+- [x] Add All-NBA and All-Defensive teams
+      → `data/end-of-season-teams.csv`. All-NBA 1950-2025, All-Defensive
+        1969-2025. All-NBA 1st 3, 2nd 2.25, 3rd 1.75. All-Defensive 1st 2,
+        2nd 1.
+      → Bulut set the All-NBA numbers and squeezed the gap between 2nd and 3rd
+        on purpose: missing the 2nd team is often one voter's opinion rather
+        than a real drop in quality.
+      → All-Rookie is in the same file and was left out. It rewards being new,
+        not being good.
+      → Reaches far more players than MVP does -- fifteen a season instead of
+        one. Gobert 2017 goes 26.8 to 31.0 on an All-NBA 2nd and All-Defensive
+        1st. Jordan 1991 passes Jokić 2022 for the first time, on the strength
+        of an All-Defensive 1st team Jokić never made.
+      → Seasons before an honour existed show "—", not a miss. Wilt 1962 could
+        not have made an All-Defensive team; there wasn't one until 1969.
+
 ## How weight sets compare
 
 |                     | MVP 1st | MVP ballot | DPOY ballot |
