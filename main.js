@@ -332,6 +332,123 @@ function findSeason(side) {
   })[0];
 }
 
+// Every piece the score is built from, as its own number. The table shows raw
+// stats, which makes it hard to see where a gap actually came from -- eight
+// rebounds a game sounds like a lot until you notice it is worth less than one
+// steal. These are the numbers as the score sees them.
+function breakdown(row) {
+  var parts = {};
+  var pts = number(row, "pts_per_game");
+  var efg = effectiveFg(row);
+  parts["scoring"] = pts === null || efg === null ? 0 : pts * efg;
+
+  var orb = number(row, "orb_per_game");
+  var drb = number(row, "drb_per_game");
+  if (orb === null || drb === null) {
+    var trb = number(row, "trb_per_game") || 0;
+    parts["rebounding"] = trb * TRB_WEIGHT;
+  } else {
+    parts["rebounding"] = orb * WEIGHTS.orb_per_game + drb * WEIGHTS.drb_per_game;
+  }
+
+  parts["assists"] = (number(row, "ast_per_game") || 0) * WEIGHTS.ast_per_game;
+  parts["steals"] = (number(row, "stl_per_game") || 0) * WEIGHTS.stl_per_game;
+  parts["blocks"] = (number(row, "blk_per_game") || 0) * WEIGHTS.blk_per_game;
+  parts["ball security"] = (number(row, "tov_per_game") || 0) * WEIGHTS.tov_per_game;
+
+  AWARDS.forEach(function (award) {
+    var share = awardShare(row, award.key);
+    parts[award.label] = share === null ? 0 : share * award.bonus;
+  });
+
+  HONOURS.forEach(function (h) {
+    var place = honour(row, h.type);
+    parts[h.label] = place ? h.bonus[place] || 0 : 0;
+  });
+
+  parts["Win Shares"] = (winShare(row) || 0) * WS_WEIGHT;
+  return parts;
+}
+
+function describe(gaps, side) {
+  return gaps
+    .filter(function (g) {
+      return side > 0 ? g.diff > 0.15 : g.diff < -0.15;
+    })
+    .map(function (g) {
+      return g.label + " (" + (g.diff > 0 ? "+" : "") + round1(g.diff) + ")";
+    });
+}
+
+function round1(n) {
+  return Math.round(n * 10) / 10;
+}
+
+function joinWords(list) {
+  if (list.length === 1) return list[0];
+  return list.slice(0, -1).join(", ") + " and " + list[list.length - 1];
+}
+
+// A sentence saying who won and where the gap came from.
+function writeVerdict(a, b, totalA, totalB) {
+  var box = document.getElementById("verdict");
+
+  if (!a || !b || totalA === null || totalB === null) {
+    box.hidden = true;
+    return;
+  }
+
+  if (totalA === totalB) {
+    box.hidden = false;
+    box.innerHTML =
+      "<strong>" + a.player + " " + a.season + "</strong> and <strong>" +
+      b.player + " " + b.season + "</strong> come out level at " + totalA + ".";
+    return;
+  }
+
+  var aWins = totalA > totalB;
+  var winner = aWins ? a : b;
+  var loser = aWins ? b : a;
+  var gap = round1(Math.abs(totalA - totalB));
+
+  var partsA = breakdown(a);
+  var partsB = breakdown(b);
+
+  // Signed so that positive always means "helps the winner".
+  var gaps = Object.keys(partsA)
+    .map(function (label) {
+      var diff = partsA[label] - partsB[label];
+      return { label: label, diff: aWins ? diff : -diff };
+    })
+    .sort(function (x, y) {
+      return Math.abs(y.diff) - Math.abs(x.diff);
+    });
+
+  var forWinner = describe(gaps, 1).slice(0, 2);
+  var forLoser = describe(gaps, -1).slice(0, 2);
+
+  var text =
+    "<strong>" + winner.player + " " + winner.season + "</strong> comes out " +
+    gap + " ahead.";
+
+  if (forWinner.length) {
+    text += " The gap is mostly " + joinWords(forWinner) + ".";
+  }
+
+  if (forLoser.length) {
+    text +=
+      " " + loser.player + " wins back " +
+      joinWords(
+        forLoser.map(function (part) {
+          return part.replace("(-", "(");
+        })
+      ) + ".";
+  }
+
+  box.hidden = false;
+  box.innerHTML = text;
+}
+
 function playerHeading(row) {
   if (!row) return "—";
   return row.player + "<span class='season'>" + row.season + " " + row.team + "</span>";
@@ -482,6 +599,7 @@ function addRatingRow(body, a, b) {
   }
 
   body.appendChild(tr);
+  writeVerdict(a, b, totalA, totalB);
 
   // Be honest when a rating is built on less than the full six stats.
   var incomplete = [scoreA, scoreB].filter(function (s) {
