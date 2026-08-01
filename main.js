@@ -18,95 +18,8 @@ var STATS = [
   { key: "ft_percent", label: "FT%", percent: true },
 ];
 
-// --- The rating ------------------------------------------------------------
-//
-// Everything is measured in points of scoring margin. The anchor is that an
-// average NBA possession is worth about 1.15 points, so a possession changing
-// hands is worth 1.15 to one side and 1.15 to the other: 2.30 in total.
-//
-//   points         not a flat weight. A point counts for what it cost, so
-//                  30 points on 20 shots beats 30 points on 30 shots. See
-//                  effectiveFg() below.
-//   assist   1.20  an assisted basket averages ~2.35, but that possession was
-//                  already worth 1.15 -- the passer added the difference
-//   oreb     1.68  0.73 x 2.30. The defence collects 73% of misses, so an
-//                  offensive board is the outcome that was NOT expected
-//   dreb     0.62  0.27 x 2.30. Mostly it just confirms what was already likely
-//   steal    2.30  a full, certain change of possession
-//   block    0.60  the shakiest of the six. The arithmetic says ~0.4, but real
-//                  models say ~0.6 because the shots never attempted against a
-//                  rim protector never show up in a box score
-//   turnover -2.30 a steal seen from the other side of the floor
-var WEIGHTS = {
-  ast_per_game: 1.2,
-  orb_per_game: 1.68,
-  drb_per_game: 0.62,
-  stl_per_game: 2.3,
-  blk_per_game: 0.6,
-  tov_per_game: -2.3,
-};
-
-// Before 1974 the box score did not split rebounds, and steals and blocks were
-// not recorded at all. For those seasons total rebounds are all we have, so
-// they get the blend of the two weights above at a typical 28/72 split.
-var TRB_WEIGHT = 0.92;
-
-function number(row, key) {
-  var raw = row[key];
-  if (raw === undefined || raw === "" || raw === "NA") return null;
-  var value = parseFloat(raw);
-  return isNaN(value) ? null : value;
-}
-
-// Effective field goal percentage: like FG%, except a made three counts as
-// one and a half makes, because it is worth one and a half times as much.
-// Plain FG% would call Curry's three and a layup the same thing and rate him
-// below players who never shoot from range.
-//
-// The file only carries this column from 1980 on. Before that there was no
-// three-point line, so eFG% and FG% are the same number -- FG% is not an
-// approximation for those seasons, it is the exact value. Using one measure
-// for every era matters: two different rulers would hand older players a
-// free advantage, since they read about 8% apart on the same shooting.
-function effectiveFg(row) {
-  var efg = number(row, "e_fg_percent");
-  if (efg !== null) return efg;
-  return number(row, "fg_percent");
-}
-
-function rating(row) {
-  var total = 0;
-  var missing = [];
-
-  // Scoring is weighted by how efficiently the points were produced.
-  var pts = number(row, "pts_per_game");
-  var efg = effectiveFg(row);
-  if (pts === null || efg === null) {
-    missing.push("pts_per_game");
-  } else {
-    total += pts * efg;
-  }
-
-  for (var key in WEIGHTS) {
-    var value = number(row, key);
-
-    if (value === null) {
-      // Rebounds have a fallback; steals and blocks do not.
-      if (key === "orb_per_game" || key === "drb_per_game") continue;
-      missing.push(key);
-      continue;
-    }
-
-    total += value * WEIGHTS[key];
-  }
-
-  // No split rebounds -- fall back to the total.
-  if (number(row, "orb_per_game") === null && number(row, "trb_per_game") !== null) {
-    total += number(row, "trb_per_game") * TRB_WEIGHT;
-  }
-
-  return { score: Math.round(total * 10) / 10, missing: missing };
-}
+// The box score half of the score lives in score.js, loaded before this file.
+// It gives us WEIGHTS, number(), effectiveFg() and rating().
 
 // What a unanimous winner is worth on top of his box score. Small on purpose:
 // these should nudge the order, not decide it.
@@ -145,6 +58,10 @@ var playersByName = {};
 // Vote share per award, keyed by "player_id|season".
 // { "nba mvp": { "jordami01|1991": 0.928, ... }, "nba dpoy": { ... } }
 var awardShares = {};
+
+// Who actually took each award home, keyed the same way. Vote share alone
+// does not say it -- 48% can be a win one year and a runner-up the next.
+var awardWinners = {};
 
 // Which seasons each award has actually been voted on. 2026 is still being
 // played and DPOY only starts in 1983 -- neither is the same as everyone
@@ -203,6 +120,7 @@ function buildAwardIndex(csv) {
   AWARDS.forEach(function (award) {
     wanted[award.key] = true;
     awardShares[award.key] = {};
+    awardWinners[award.key] = {};
     votedSeasons[award.key] = {};
   });
 
@@ -215,6 +133,7 @@ function buildAwardIndex(csv) {
 
     votedSeasons[row.award][row.season] = true;
     awardShares[row.award][row.player_id + "|" + row.season] = parseFloat(row.share);
+    if (row.winner === "TRUE") awardWinners[row.award][row.player_id + "|" + row.season] = true;
   }
 }
 
@@ -312,10 +231,17 @@ function findSeason(side) {
   })[0];
 }
 
-function formatShare(share) {
+function formatShare(share, row, award) {
   // null means the season has not been voted on yet, which is not zero votes.
   if (share === null) return "—";
-  return Math.round(share * 100) + "%";
+
+  // A single vote out of hundreds rounds to 0%, which reads as "got nothing"
+  // when the player did get something. Say so instead.
+  var text = share > 0 && share < 0.005 ? "&lt;1%" : Math.round(share * 100) + "%";
+  if (row && awardWinners[award] && awardWinners[award][row.player_id + "|" + row.season]) {
+    text += " <span class='won'>won</span>";
+  }
+  return text;
 }
 
 function format(row, stat) {
@@ -370,11 +296,15 @@ function addRatingRow(body, a, b) {
     var shareA = a ? awardShare(a, award.key) : null;
     var shareB = b ? awardShare(b, award.key) : null;
 
+    // A row of two zeroes says nothing. Only show an award when at least one
+    // of the two players was actually in the running for it.
+    if (!shareA && !shareB) return;
+
     var voteRow = document.createElement("tr");
     voteRow.innerHTML =
-      "<td>" + formatShare(shareA) + "</td>" +
+      "<td>" + formatShare(shareA, a, award.key) + "</td>" +
       "<td class='stat-name'>" + award.label + "</td>" +
-      "<td>" + formatShare(shareB) + "</td>";
+      "<td>" + formatShare(shareB, b, award.key) + "</td>";
     if (shareA !== null && shareB !== null) {
       if (shareA > shareB) voteRow.children[0].className = "better";
       if (shareB > shareA) voteRow.children[2].className = "better";

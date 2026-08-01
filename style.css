@@ -77,6 +77,20 @@ th {
   line-height: 1.5;
 }
 
+.won {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f0e2b6;
+  color: #6b5312;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
 td.better {
   font-weight: 700;
   color: #1b6b3a;

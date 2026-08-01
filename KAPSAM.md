@@ -59,6 +59,35 @@
         has never seen the answer. Anything tuned against MVP results must be
         tuned against `rating()`, never against the displayed total.
 
+- [x] Search for better weights, then decide not to use them
+      → `tools/tune.js` hill-climbs the six weights against MVP voting,
+        tuning on half the seasons and testing on the other half.
+        `tools/compare.js` puts several weight sets through three tests.
+      → The search found weights that pick the MVP in 35 seasons instead of
+        29. It got there partly by setting the block weight to zero, which
+        costs nothing when your only target is "who won MVP" -- no defensive
+        specialist ever wins it.
+      → Bulut predicted this before it was measured: optimising the top of the
+        list would scramble everyone below it. The DPOY ballot confirmed it,
+        58.6% down to 56.6%.
+      → Kept the possession-derived weights. They hold their own against two
+        published formulas, and they can be explained.
+
+## How weight sets compare
+
+|                     | MVP 1st | MVP ballot | DPOY ballot |
+|---------------------|---------|------------|-------------|
+| Bulut (possession)  | 29/70   | 72.8%      | 58.6%       |
+| Tuned for MVP       | 35/70   | 73.7%      | 56.6%       |
+| Game Score          | 30/70   | 74.0%      | 57.4%       |
+| Win Score           | 27/70   | 72.0%      | 59.4%       |
+
+Ballot columns: of every pair of players who got votes that season, how often
+the formula agreed with the voters about which of the two was better.
+
+Nothing wins everywhere. There is no best formula, only a formula that is best
+at the thing you chose to measure.
+
 ## How well does the box score formula match MVP voting?
 
 Measured over 70 seasons, using `rating()` alone (no MVP bonus), minimum 50
