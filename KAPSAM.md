@@ -73,6 +73,21 @@
       → Kept the possession-derived weights. They hold their own against two
         published formulas, and they can be explained.
 
+- [x] Add Win Shares to the score
+      → `data/player-advanced.csv`, Win Shares 1950-2026. A quarter of a
+        player's season total is added, shown as its own row.
+      → Bulut first wanted `ws / team wins`, on the reasoning that it measures
+        how much of the team a player carried. The data killed it: the top of
+        that list is the one good player on a terrible team (Brook Lopez on a
+        12-win Nets team scores twice Jordan 1991), and Curry's 73-win season
+        comes out lowest of every star we tested. He switched to plain `ws`
+        after noticing that "won games for his team" is what `ws` already is.
+      → Noted and accepted: Win Shares is a finished formula, not raw material.
+        Points, rebounds and assists are already inside it with Basketball
+        Reference's own weights, so those stats now count twice.
+      → Like the award bonuses, this is added outside `rating()`. The tuning
+        tools still see a clean box score formula.
+
 ## How weight sets compare
 
 |                     | MVP 1st | MVP ballot | DPOY ballot |

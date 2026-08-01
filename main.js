@@ -68,6 +68,15 @@ var awardWinners = {};
 // being snubbed, and the page has to show the difference.
 var votedSeasons = {};
 
+// Win Shares, keyed by "player_id|season|team". Basketball Reference's own
+// estimate of how many of his team's wins a player was responsible for.
+var winShares = {};
+
+// Win Shares is a season total on a scale of its own -- 20 is a huge year.
+// A quarter of it puts a star's contribution at about five points, the same
+// size as the MVP bonus: enough to matter, not enough to take over.
+var WS_WEIGHT = 0.25;
+
 Promise.all([
   fetch("data/player-per-game.csv").then(function (r) {
     return r.text();
@@ -75,10 +84,14 @@ Promise.all([
   fetch("data/player-award-shares.csv").then(function (r) {
     return r.text();
   }),
+  fetch("data/player-advanced.csv").then(function (r) {
+    return r.text();
+  }),
 ])
   .then(function (files) {
     buildPlayerIndex(files[0]);
     buildAwardIndex(files[1]);
+    buildWinShareIndex(files[2]);
     fillPlayerList();
     document.getElementById("status").hidden = true;
     document.getElementById("pickers").hidden = false;
@@ -135,6 +148,28 @@ function buildAwardIndex(csv) {
     awardShares[row.award][row.player_id + "|" + row.season] = parseFloat(row.share);
     if (row.winner === "TRUE") awardWinners[row.award][row.player_id + "|" + row.season] = true;
   }
+}
+
+function buildWinShareIndex(csv) {
+  var lines = csv.trim().split("\n");
+  var columns = lines[0].split(",");
+
+  for (var i = 1; i < lines.length; i++) {
+    var row = rowToObject(lines[i].split(","), columns);
+    if (row.lg !== "NBA") continue;
+
+    var ws = number(row, "ws");
+    if (ws === null) continue;
+
+    // Team is part of the key because a traded player has one row per team
+    // plus a combined one, exactly like the per-game file.
+    winShares[row.player_id + "|" + row.season + "|" + row.team] = ws;
+  }
+}
+
+function winShare(row) {
+  var ws = winShares[row.player_id + "|" + row.season + "|" + row.team];
+  return ws === undefined ? null : ws;
 }
 
 function rowToObject(values, columns) {
@@ -312,8 +347,24 @@ function addRatingRow(body, a, b) {
     body.appendChild(voteRow);
   });
 
-  var totalA = scoreA ? Math.round((scoreA.score + awardBonus(a)) * 10) / 10 : null;
-  var totalB = scoreB ? Math.round((scoreB.score + awardBonus(b)) * 10) / 10 : null;
+  var wsA = a ? winShare(a) : null;
+  var wsB = b ? winShare(b) : null;
+
+  if (wsA !== null || wsB !== null) {
+    var wsRow = document.createElement("tr");
+    wsRow.innerHTML =
+      "<td>" + (wsA === null ? "—" : wsA) + "</td>" +
+      "<td class='stat-name'>Win Shares</td>" +
+      "<td>" + (wsB === null ? "—" : wsB) + "</td>";
+    if (wsA !== null && wsB !== null) {
+      if (wsA > wsB) wsRow.children[0].className = "better";
+      if (wsB > wsA) wsRow.children[2].className = "better";
+    }
+    body.appendChild(wsRow);
+  }
+
+  var totalA = scoreA ? Math.round((scoreA.score + awardBonus(a) + (wsA || 0) * WS_WEIGHT) * 10) / 10 : null;
+  var totalB = scoreB ? Math.round((scoreB.score + awardBonus(b) + (wsB || 0) * WS_WEIGHT) * 10) / 10 : null;
 
   var tr = document.createElement("tr");
   tr.className = "rating-row";
