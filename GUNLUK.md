@@ -1,3 +1,54 @@
+## 2026-08-02 — 4. oturum
+**Bugünün işi:** Oyunu yapmak
+
+**Ne yaptım:** Draft oyununu sıfırdan kurduk. 82-0'ın kopyası değil — ondan
+almak istediğim tek şey vardı, "zor bir hedefe tekrar tekrar saldırmak".
+Kural şu oldu: 100 milyon bütçe, beş tur, her turda 15 oyuncu-sezon
+gösteriliyor, beş pozisyonu da dolduruyorsun.
+
+Oyunun bütün mantığı fiyatın değerden farklı olması. Fiyat sadece sayıdan
+geliyor (bir de oynadığı maç sayısından), değer ise Score — asist, ribaund,
+savunma, hepsi içinde. Yani sessiz ama iyi bir oyuncu ucuza çok puan
+getiriyor, çok sayı atan ama kötü şut yüzdesi olan biri servet götürüp az
+veriyor. Score oynarken gizli, sonunda açılıyor.
+
+Sonra sırayla: aynı oyuncunun iki farklı sezonunu almayı engelledik,
+Hall of Fame + bugünün yıldızlarından bir "efsane" listesi yapıp onlara
++3 puan verdik (sadece oyunda, karşılaştırıcıda değil), skoru açan bir
+düğme koyduk, fiyatları NBA maaşı gibi ($30M) gösterdik.
+
+Günün son işi en önemlisiydi: boş pozisyon bedavaydı. Robot testinde "hep
+en pahalıyı al" stratejisi oyunların %97'sini eksik kadroyla bitiriyordu ve
+cezasını çekmiyordu. İki deneme yaptık, ilki işe yaramadı, ikincisi yaradı.
+Artık kalan kutuları dolduramayacak kadar para harcamana izin verilmiyor,
+ve paran azalınca ucuz oyuncular çıkıyor. Dört stratejinin dördü de %100
+tam kadro bitiriyor, kelepir avcısı hâlâ açık ara önde (121 - 108 - 86 - 61).
+
+**Ne bozdum / yanlış yaptım:** Oyun sayfası sonsuza kadar "Loading data..."
+dedi, sebebi `game.html`'e `data.js`'i eklemeyi unutmamızdı — konsolu açıp
+bakmayı öğrendim, sayfa takıldığında ilk yapılacak şey oymuş.
+
+Bir de boş pozisyon için ilk çözümümüz işe yaramadı: taban puanı düşürüp
+ucuz oyuncu çıkarttık ama paran zaten $0-2M'a düştüğü ve ligdeki en ucuz
+oyuncu $3M olduğu için alacak bir şey yoktu. Ölçmeseydik "düzelttik"
+sanacaktık.
+
+**Yarım kalan:** 60'ların pivotları hâlâ en büyük kelepir — o dönemde
+ribaund bol olduğu için Score'ları şişiyor. Oyuncu bunu fark ederse oyun
+tek taktiğe düşebilir.
+
+**Babama sorum:** yok
+
+**Keyif:** evet
+
+**Kavram kontrolü:**
+- Fiyat ile değeri ayırmak neden oyunu oyun yapar → kendi kurdu ✅
+- Boş slotun bedava olması → sayıyla gösterince oturdu, çözümü de kendi
+  söyledi ("son turlarda minimum azalsın ki kadro dolsun") ✅
+- Konsola bakmak / sessiz hata → 🔸
+
+---
+
 ## 2026-08-02 — 3. oturum
 **Bugünün işi:** Ağırlık testleri
 
@@ -129,3 +180,7 @@ bozuldu, o yüzden basit halde bıraktık ve sayfada açıkça yazdık.
 - Win Shares — 2 Ağu ✅
 - box-sizing — 2 Ağu 🔸
 - olay döngüsü (bir olayın tepkisi kendini tetiklemesi) — 2 Ağu 🔸
+- fiyat ≠ değer (oyunu oyun yapan boşluk) — 2 Ağu ✅
+- CSV'de tırnak içindeki virgül — 2 Ağu 🔸
+- sessiz hata / konsola bakmak — 2 Ağu 🔸
+- robotla oynatıp ölçmek (playtest) — 2 Ağu ✅

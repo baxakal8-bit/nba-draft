@@ -23,6 +23,23 @@ var DECK_SIZE = 15;
 var MIN_SCORE = 10;
 var MIN_GAMES = 40;
 
+// The second pool, dealt from only when the money is gone.
+//
+// Overspending early used to end the run: the deck came back and every card
+// cost more than what was left, so the game stopped with empty slots and no
+// punishment for leaving them empty. Now the floor drops instead. You still
+// get to fill the position -- with whoever is left at that price, which is
+// the punishment. A bench player is worth about 4, so three empty slots
+// filled this way is around 12 points, not the 60 a real starter pays.
+// The floor has to be genuinely low, not just lower. At forty games the
+// cheapest man in the league still costs 3, so two empty slots reserve 6 and
+// a 33 budget will not let you take a 28 point guard -- blocked over one
+// million. Ten games lets a bench player through at 1, so the reserve almost
+// never stands between you and a star. You can overspend now; you just pay
+// for it with whoever is left.
+var SCRAP_MIN_SCORE = 2;
+var SCRAP_MIN_GAMES = 10;
+
 // What you pay is not what you get. Price comes from points per game, because
 // that is what a player is famous for -- highlight reels are made of scoring,
 // not of boxing out. Value comes from the Score, which counts everything.
@@ -109,6 +126,8 @@ function buildLegendIndex(csv) {
 }
 
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
+var scrapPool = {}; // the same shape, built to a much lower floor
+var floorPrice = {}; // the cheapest anybody can be had for, per position
 
 var state = null;
 
@@ -142,26 +161,43 @@ Promise.all([
 function buildPool() {
   POSITIONS.forEach(function (position) {
     pool[position] = [];
+    scrapPool[position] = [];
   });
 
   Object.keys(playersByName).forEach(function (name) {
     playersByName[name].forEach(function (row) {
       if (!pool[row.pos]) return; // no position recorded, or a combined team row
-      if ((number(row, "g") || 0) < MIN_GAMES) return;
 
-      var score = fullScore(row);
-      if (score < MIN_SCORE) return;
+      var games = number(row, "g") || 0;
+      if (games < SCRAP_MIN_GAMES) return;
+
+      var base = fullScore(row);
+      if (base < SCRAP_MIN_SCORE) return;
 
       // The game pays a little extra for a famous name. The comparison page
       // does not -- fullScore() is left exactly as it is.
-      score = Math.round((score + fame(row)) * 10) / 10;
+      var score = Math.round((base + fame(row)) * 10) / 10;
 
-      var price = Math.round(
-        (number(row, "pts_per_game") || 0) * PRICE_PER_POINT +
-          (number(row, "g") || 0) * PRICE_PER_GAME
+      // Nobody is free. A one million floor keeps the reserve arithmetic
+      // honest and stops a rounding-to-zero player from being a free slot.
+      var price = Math.max(
+        1,
+        Math.round(
+          (number(row, "pts_per_game") || 0) * PRICE_PER_POINT +
+            games * PRICE_PER_GAME
+        )
       );
-      pool[row.pos].push({ row: row, score: score, price: price });
+      var card = { row: row, score: score, price: price };
+
+      scrapPool[row.pos].push(card);
+      if (base >= MIN_SCORE && games >= MIN_GAMES) pool[row.pos].push(card);
     });
+  });
+
+  POSITIONS.forEach(function (position) {
+    floorPrice[position] = scrapPool[position].reduce(function (low, card) {
+      return Math.min(low, card.price);
+    }, Infinity);
   });
 }
 
@@ -188,14 +224,56 @@ function openPositions() {
   });
 }
 
+// You are never allowed to spend yourself out of a lineup.
+//
+// Buying a man is not just his salary: it is his salary plus enough left over
+// to put somebody in every slot you have not filled yet. Without this you
+// could take three stars, run dry, and finish with an empty position -- which
+// cost you nothing, so the rule that you must field five was never real.
+//
+// The reserve is the cheapest player available at each still-open position,
+// so it is as small as it can honestly be. Everything above it is yours.
+function reserveAfter(position) {
+  return openPositions().reduce(function (sum, open) {
+    return open === position ? sum : sum + floorPrice[open];
+  }, 0);
+}
+
+function canAfford(card) {
+  return card.price + reserveAfter(card.row.pos) <= state.budget;
+}
+
 // The deck only ever holds players who can still be used. Dealing from the
 // whole league would eventually offer five centres for a slot already filled.
 function deal() {
   var open = openPositions();
+
+  state.deck = draw(pool, open, null);
+
+  state.scrap = false;
+
+  // Nothing on the table is affordable, so the table changes rather than the
+  // game ending. Same positions, lower floor, and only cards the remaining
+  // money can actually reach.
+  if (!state.deck.some(canAfford)) {
+    var cheap = draw(scrapPool, open, canAfford);
+    if (cheap.length) {
+      state.deck = cheap;
+      state.scrap = true;
+    }
+  }
+
+  // Sorted by price, because price is all you are shown while choosing.
+  state.deck.sort(function (a, b) {
+    return b.price - a.price;
+  });
+}
+
+function draw(source, open, allow) {
   var candidates = [];
 
   open.forEach(function (position) {
-    candidates = candidates.concat(pool[position]);
+    candidates = candidates.concat(source[position]);
   });
 
   // A man cannot play two positions in the same lineup, and being offered
@@ -208,30 +286,28 @@ function deal() {
   });
 
   candidates = candidates.filter(function (card) {
-    return !seen[card.row.player_id];
+    if (seen[card.row.player_id]) return false;
+    return !allow || allow(card);
   });
 
-  state.deck = [];
+  var deck = [];
   var tries = 0;
 
-  while (state.deck.length < DECK_SIZE && tries < candidates.length * 4) {
+  while (deck.length < DECK_SIZE && tries < candidates.length * 4) {
     tries++;
     var pick = candidates[Math.floor(Math.random() * candidates.length)];
     if (!pick || seen[pick.row.player_id]) continue;
 
     seen[pick.row.player_id] = true;
-    state.deck.push(pick);
+    deck.push(pick);
   }
 
-  // Sorted by price, because price is all you are shown while choosing.
-  state.deck.sort(function (a, b) {
-    return b.price - a.price;
-  });
+  return deck;
 }
 
 function choose(index) {
   var pick = state.deck[index];
-  if (!pick || pick.price > state.budget) return;
+  if (!pick || !canAfford(pick)) return;
 
   state.roster[pick.row.pos] = pick;
   state.budget = Math.round((state.budget - pick.price) * 10) / 10;
@@ -241,11 +317,9 @@ function choose(index) {
 
   deal();
 
-  // Nothing left you can pay for -- the run stops here, short of a full five.
-  var affordable = state.deck.filter(function (card) {
-    return card.price <= state.budget;
-  });
-  if (!affordable.length) return finish();
+  // Even the bargain bin has nothing at this price. Only then does the run
+  // stop short of a full five.
+  if (!state.deck.some(canAfford)) return finish();
 
   paint();
 }
@@ -291,6 +365,12 @@ function paint() {
   // every choice into a subtraction instead of a judgement.
   document.getElementById("total").textContent = state.over || showScores ? total() : "?";
 
+  var title = document.getElementById("deck-title");
+  title.textContent = state.scrap
+    ? "Bargain bin — this is all you can still afford"
+    : "Pick one";
+  title.classList.toggle("is-scrap", !!state.scrap);
+
   paintRoster();
   paintDeck();
 }
@@ -309,6 +389,12 @@ function paintRoster() {
         "<span class='slot-pos'>" + position + "</span>" +
         "<span class='slot-name'>" + pick.row.player + "</span>" +
         "<span class='slot-season'>" + pick.row.season + " " + pick.row.team + "</span>" +
+        // The same line the card carried. Once a man is in the lineup his
+        // numbers are still worth checking -- that is how you work out why
+        // the score came out the way it did.
+        "<span class='slot-stats'>" +
+          statLine(pick.row) +
+        "</span>" +
         "<span class='slot-numbers'>" +
           "<span class='slot-cost'>" + money(pick.price) + "<span class='tag'>salary</span></span>" +
           (state.over || showScores
@@ -330,7 +416,7 @@ function paintDeck() {
   box.innerHTML = "";
 
   state.deck.forEach(function (card, index) {
-    var afford = card.price <= state.budget;
+    var afford = canAfford(card);
     var el = document.createElement("button");
     el.type = "button";
     el.className = "card" + (afford ? "" : " is-broke");
@@ -340,19 +426,7 @@ function paintDeck() {
       "<span class='card-pos'>" + card.row.pos + "</span>" +
       "<span class='card-name'>" + card.row.player + "</span>" +
       "<span class='card-season'>" + card.row.season + " " + card.row.team + "</span>" +
-      // Everything the price does not already tell you. Price is built from
-      // points, so points alone would say nothing new -- the rest is where
-      // a bargain hides.
-      "<span class='card-line'>" +
-        stat(card.row, "pts_per_game") + " pts &middot; " +
-        stat(card.row, "trb_per_game") + " reb &middot; " +
-        stat(card.row, "ast_per_game") + " ast" +
-      "</span>" +
-      "<span class='card-line'>" +
-        stat(card.row, "stl_per_game") + " stl &middot; " +
-        stat(card.row, "blk_per_game") + " blk &middot; " +
-        percent(card.row, "e_fg_percent") + " eFG" +
-      "</span>" +
+      statLine(card.row) +
       "<span class='card-price'>" + money(card.price) +
         "<span class='tag'>salary</span></span>" +
       (showScores
@@ -371,6 +445,23 @@ function paintDeck() {
 // pays a man for scoring. The numbers are unchanged, only dressed.
 function money(amount) {
   return "$" + amount + "M";
+}
+
+// Everything the price does not already tell you. Price is built from points,
+// so points alone would say nothing new -- the rest is where a bargain hides.
+function statLine(row) {
+  return (
+    "<span class='card-line'>" +
+      stat(row, "pts_per_game") + " pts &middot; " +
+      stat(row, "trb_per_game") + " reb &middot; " +
+      stat(row, "ast_per_game") + " ast" +
+    "</span>" +
+    "<span class='card-line'>" +
+      stat(row, "stl_per_game") + " stl &middot; " +
+      stat(row, "blk_per_game") + " blk &middot; " +
+      percent(row, "e_fg_percent") + " eFG" +
+    "</span>"
+  );
 }
 
 function stat(row, key) {
