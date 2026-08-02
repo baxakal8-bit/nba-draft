@@ -274,7 +274,7 @@ function finish() {
       ", with " + (POSITIONS.length - filled) +
       " of the five empty. You ran out of money before you ran out of rounds.";
   } else {
-    text += ", with " + state.budget + " left unspent.";
+    text += ", with " + money(state.budget) + " left under the cap.";
   }
 
   document.getElementById("verdict").innerHTML = text;
@@ -284,7 +284,7 @@ function finish() {
 // --- Drawing ---------------------------------------------------------------
 
 function paint() {
-  document.getElementById("budget").textContent = state.budget;
+  document.getElementById("budget").textContent = money(state.budget);
   document.getElementById("round").textContent =
     Math.min(state.round, POSITIONS.length) + " / " + POSITIONS.length;
   // The Score stays hidden while you are still picking. Seeing it would turn
@@ -310,7 +310,7 @@ function paintRoster() {
         "<span class='slot-name'>" + pick.row.player + "</span>" +
         "<span class='slot-season'>" + pick.row.season + " " + pick.row.team + "</span>" +
         "<span class='slot-numbers'>" +
-          "<span class='slot-cost'>" + pick.price + "<span class='tag'>cost</span></span>" +
+          "<span class='slot-cost'>" + money(pick.price) + "<span class='tag'>salary</span></span>" +
           (state.over || showScores
             ? "<span class='slot-score'>" + pick.score + "<span class='tag'>score</span></span>"
             : "<span class='slot-score is-hidden'>?<span class='tag'>score</span></span>") +
@@ -353,8 +353,8 @@ function paintDeck() {
         stat(card.row, "blk_per_game") + " blk &middot; " +
         percent(card.row, "e_fg_percent") + " eFG" +
       "</span>" +
-      "<span class='card-price'>" + card.price +
-        "<span class='tag'>cost</span></span>" +
+      "<span class='card-price'>" + money(card.price) +
+        "<span class='tag'>salary</span></span>" +
       (showScores
         ? "<span class='card-worth'>" + card.score + "<span class='tag'>score</span></span>"
         : "");
@@ -365,6 +365,12 @@ function paintDeck() {
 
     box.appendChild(el);
   });
+}
+
+// Prices read as salaries, because that is what they are: what the league
+// pays a man for scoring. The numbers are unchanged, only dressed.
+function money(amount) {
+  return "$" + amount + "M";
 }
 
 function stat(row, key) {

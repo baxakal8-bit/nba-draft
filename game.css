@@ -1,5 +1,11 @@
 /* The draft game. Sits on top of style.css, which owns the colours. */
 
+/* Wider than the comparison page. Fifteen cards need the room, and the whole
+   point of a card is that every number on it can be read at a glance. */
+body {
+  max-width: 1040px;
+}
+
 h2 {
   font-size: 0.7rem;
   font-weight: 700;
@@ -147,8 +153,8 @@ h2 {
 
 .card-worth {
   display: block;
-  margin-top: 6px;
-  font-size: 1.1rem;
+  margin-top: 8px;
+  font-size: 1.4rem;
   font-weight: 800;
   color: var(--gold);
   font-variant-numeric: tabular-nums;
@@ -156,8 +162,8 @@ h2 {
 
 #deck {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
 }
 
 .card {
@@ -166,7 +172,7 @@ h2 {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 10px 14px;
+  padding: 18px 14px 20px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -187,7 +193,7 @@ h2 {
 
 .card-pos {
   display: block;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -195,31 +201,31 @@ h2 {
 
 .card-name {
   display: block;
-  margin-top: 8px;
-  font-size: 0.82rem;
+  margin-top: 10px;
+  font-size: 1.02rem;
   font-weight: 600;
   line-height: 1.25;
 }
 
 .card-season {
   display: block;
-  margin-top: 2px;
-  font-size: 0.62rem;
+  margin-top: 4px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
 .card-line {
   display: block;
-  margin-top: 8px;
-  font-size: 0.62rem;
+  margin-top: 9px;
+  font-size: 0.8rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
 .card-price {
   display: block;
-  margin-top: 10px;
-  font-size: 1.25rem;
+  margin-top: 14px;
+  font-size: 1.6rem;
   font-weight: 800;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
@@ -297,8 +303,7 @@ h2 {
 }
 
 @media (max-width: 640px) {
-  #roster,
-  #deck {
+  #roster {
     grid-template-columns: repeat(2, 1fr);
   }
 }
