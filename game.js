@@ -112,6 +112,11 @@ var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
 
 var state = null;
 
+// Hidden by default. Shown, every pick becomes "take the biggest number" and
+// the guessing -- which is the game -- disappears. Left as a switch anyway,
+// because it is a good way to learn what a season is actually worth.
+var showScores = false;
+
 // --- Setting up ------------------------------------------------------------
 
 Promise.all([
@@ -281,7 +286,7 @@ function paint() {
     Math.min(state.round, POSITIONS.length) + " / " + POSITIONS.length;
   // The Score stays hidden while you are still picking. Seeing it would turn
   // every choice into a subtraction instead of a judgement.
-  document.getElementById("total").textContent = state.over ? total() : "?";
+  document.getElementById("total").textContent = state.over || showScores ? total() : "?";
 
   paintRoster();
   paintDeck();
@@ -303,7 +308,7 @@ function paintRoster() {
         "<span class='slot-season'>" + pick.row.season + " " + pick.row.team + "</span>" +
         "<span class='slot-numbers'>" +
           "<span class='slot-cost'>" + pick.price + "<span class='tag'>cost</span></span>" +
-          (state.over
+          (state.over || showScores
             ? "<span class='slot-score'>" + pick.score + "<span class='tag'>score</span></span>"
             : "<span class='slot-score is-hidden'>?<span class='tag'>score</span></span>") +
         "</span>";
@@ -346,7 +351,10 @@ function paintDeck() {
         percent(card.row, "e_fg_percent") + " eFG" +
       "</span>" +
       "<span class='card-price'>" + card.price +
-        "<span class='tag'>cost</span></span>";
+        "<span class='tag'>cost</span></span>" +
+      (showScores
+        ? "<span class='card-worth'>" + card.score + "<span class='tag'>score</span></span>"
+        : "");
 
     el.addEventListener("click", function () {
       choose(index);
@@ -370,3 +378,21 @@ function percent(row, key) {
 }
 
 document.getElementById("again").addEventListener("click", startRun);
+
+Array.prototype.forEach.call(
+  document.getElementById("reveal").children,
+  function (button) {
+    button.addEventListener("click", function () {
+      showScores = button.getAttribute("data-show") === "yes";
+
+      Array.prototype.forEach.call(
+        document.getElementById("reveal").children,
+        function (other) {
+          other.classList.toggle("is-on", other === button);
+        }
+      );
+
+      if (state) paint();
+    });
+  }
+);

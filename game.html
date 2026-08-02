@@ -29,7 +29,15 @@
 
       <div id="roster"></div>
 
-      <h2 id="deck-title">Pick one</h2>
+      <div id="deck-head">
+        <h2 id="deck-title">Pick one</h2>
+        <div id="reveal">
+          <button type="button" class="reveal-option is-on" data-show="no">
+            Scores hidden <span class="hint">recommended</span>
+          </button>
+          <button type="button" class="reveal-option" data-show="yes">Scores shown</button>
+        </div>
+      </div>
       <div id="deck"></div>
 
       <div id="finish" hidden>
