@@ -329,9 +329,7 @@ function paintDeck() {
     el.disabled = !afford;
 
     el.innerHTML =
-      "<span class='card-pos'>" + card.row.pos +
-        (fame(card.row) ? "<span class='legend' title='legend'>&#9733;</span>" : "") +
-      "</span>" +
+      "<span class='card-pos'>" + card.row.pos + "</span>" +
       "<span class='card-name'>" + card.row.player + "</span>" +
       "<span class='card-season'>" + card.row.season + " " + card.row.team + "</span>" +
       // Everything the price does not already tell you. Price is built from
