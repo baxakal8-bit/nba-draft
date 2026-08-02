@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Draft</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="game.css" />
+  </head>
+  <body>
+    <h1>Draft</h1>
+
+    <p id="status">Loading data...</p>
+
+    <div id="game" hidden>
+      <div id="bar">
+        <div class="meter">
+          <span class="meter-label">Budget</span>
+          <span class="meter-value" id="budget">100</span>
+        </div>
+        <div class="meter">
+          <span class="meter-label">Round</span>
+          <span class="meter-value" id="round">1 / 5</span>
+        </div>
+        <div class="meter">
+          <span class="meter-label">Score</span>
+          <span class="meter-value" id="total">0</span>
+        </div>
+      </div>
+
+      <div id="roster"></div>
+
+      <h2 id="deck-title">Pick one</h2>
+      <div id="deck"></div>
+
+      <div id="finish" hidden>
+        <p id="verdict"></p>
+        <button id="again" type="button">Play again</button>
+      </div>
+    </div>
+
+    <script src="score.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
