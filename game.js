@@ -6,16 +6,21 @@
 
 var POSITIONS = ["PG", "SG", "SF", "PF", "C"];
 var BUDGET = 100;
-var DECK_SIZE = 5;
+var DECK_SIZE = 15;
 
 // The pool the decks are dealt from.
 //
-// Dealt from everybody, the median player-season scores 8.8 and five picks
-// would cost about 45 -- the budget would never bind and there would be no
-// game. Above a floor of 15 the median is 19.1, so five average players cost
-// 96 of the 100. That is the whole tension, and it only exists because of
-// this line.
-var MIN_SCORE = 15;
+// Dealt from absolutely everybody the median player-season scores 8.8, five
+// picks would cost about 45, and the budget would never bind. A floor keeps
+// the table worth choosing from.
+//
+// Where to put it is a trade. Lower means a wider table, and with fifteen
+// cards a wider table actually rewards knowing what to look for -- the gap
+// between hunting bargains and picking at random grows from 21 points at a
+// floor of 15 to 30 at a floor of 5. But it also means more cheap players, so
+// the money stops running out: average budget left over goes from 13 to 21.
+// Ten keeps both -- a pool of 10,240 and a budget that still bites.
+var MIN_SCORE = 10;
 var MIN_GAMES = 40;
 
 // What you pay is not what you get. Price comes from points per game, because
