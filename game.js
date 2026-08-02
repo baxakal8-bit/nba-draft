@@ -115,7 +115,10 @@ var state = null;
 // Hidden by default. Shown, every pick becomes "take the biggest number" and
 // the guessing -- which is the game -- disappears. Left as a switch anyway,
 // because it is a good way to learn what a season is actually worth.
-var showScores = false;
+//
+// Flipping it reloads the page, so the choice has to outlive the reload. It
+// is the only thing this game remembers between visits.
+var showScores = localStorage.getItem("showScores") === "yes";
 
 // --- Setting up ------------------------------------------------------------
 
@@ -379,20 +382,19 @@ function percent(row, key) {
 
 document.getElementById("again").addEventListener("click", startRun);
 
+// Mark whichever option is currently in force, then let a click switch it.
+// Changing it starts a new run -- revealing the answers halfway through a
+// game you were guessing at is not really the same game.
 Array.prototype.forEach.call(
   document.getElementById("reveal").children,
   function (button) {
+    var wantsScores = button.getAttribute("data-show") === "yes";
+    button.classList.toggle("is-on", wantsScores === showScores);
+
     button.addEventListener("click", function () {
-      showScores = button.getAttribute("data-show") === "yes";
-
-      Array.prototype.forEach.call(
-        document.getElementById("reveal").children,
-        function (other) {
-          other.classList.toggle("is-on", other === button);
-        }
-      );
-
-      if (state) paint();
+      if (wantsScores === showScores) return;
+      localStorage.setItem("showScores", wantsScores ? "yes" : "no");
+      location.reload();
     });
   }
 );

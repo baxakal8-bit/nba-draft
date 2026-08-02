@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="game.css" />
   </head>
   <body>
-    <h1>Draft</h1>
+    <div id="top">
+      <h1>Draft</h1>
+      <div id="reveal">
+        <button type="button" class="reveal-option is-on" data-show="no">
+          Scores hidden <span class="hint">recommended</span>
+        </button>
+        <button type="button" class="reveal-option" data-show="yes">Scores shown</button>
+      </div>
+    </div>
 
     <p id="status">Loading data...</p>
 
@@ -29,15 +37,7 @@
 
       <div id="roster"></div>
 
-      <div id="deck-head">
-        <h2 id="deck-title">Pick one</h2>
-        <div id="reveal">
-          <button type="button" class="reveal-option is-on" data-show="no">
-            Scores hidden <span class="hint">recommended</span>
-          </button>
-          <button type="button" class="reveal-option" data-show="yes">Scores shown</button>
-        </div>
-      </div>
+      <h2 id="deck-title">Pick one</h2>
       <div id="deck"></div>
 
       <div id="finish" hidden>

@@ -96,9 +96,9 @@ h2 {
 
 /* --- the deck --- */
 
-#deck-head {
+#top {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
@@ -298,65 +298,7 @@ h2 {
 
 @media (max-width: 640px) {
   #roster,
-  #deck-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-#reveal {
-  display: flex;
-  gap: 4px;
-  padding: 3px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.reveal-option {
-  font: inherit;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 6px 10px;
-  color: var(--muted);
-  background: none;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.reveal-option.is-on {
-  background: var(--line);
-  color: var(--text);
-}
-
-.hint {
-  margin-left: 5px;
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  color: var(--muted);
-}
-
-.reveal-option.is-on .hint {
-  color: var(--accent);
-}
-
-.card-worth {
-  display: block;
-  margin-top: 6px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-}
-
-#deck {
+  #deck {
     grid-template-columns: repeat(2, 1fr);
   }
 }
