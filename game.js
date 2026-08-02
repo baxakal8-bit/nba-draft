@@ -46,34 +46,20 @@ var MIN_GAMES = 40;
 var PRICE_PER_POINT = 0.924;
 var PRICE_PER_GAME = 0.0546;
 
-// The famous ones, by hand.
+// Who counts as famous.
 //
-// This started as a count of All-Star selections, which was wrong: Rudy
-// Gobert has three of them and nobody would call him a legend. Fame is not a
-// number in this dataset, so it is a list, and the list is a judgement.
-//
-// Add or remove names freely -- that is the point of it being here and not
-// computed. Spelling has to match the data exactly, accents included.
-var LEGENDS = [
-  "Michael Jordan", "LeBron James", "Kareem Abdul-Jabbar", "Magic Johnson",
-  "Larry Bird", "Bill Russell", "Wilt Chamberlain", "Shaquille O'Neal",
-  "Kobe Bryant", "Tim Duncan", "Hakeem Olajuwon", "Stephen Curry",
-  "Kevin Durant", "Oscar Robertson", "Jerry West", "Moses Malone",
-  "Julius Erving", "Karl Malone", "Charles Barkley", "Allen Iverson",
-  "Dwyane Wade", "Dirk Nowitzki", "Giannis Antetokounmpo", "Nikola Jokić",
-  "Isiah Thomas", "Scottie Pippen", "David Robinson", "Patrick Ewing",
-  "John Stockton", "Kevin Garnett", "Steve Nash", "Elgin Baylor",
-  "Rick Barry", "Clyde Drexler", "Reggie Miller", "Ray Allen",
-  "Paul Pierce", "Russell Westbrook", "James Harden", "Anthony Davis",
-  "Luka Dončić", "Joel Embiid", "Kawhi Leonard", "Chris Paul",
-  "Vince Carter", "Tracy McGrady", "Dennis Rodman", "Carmelo Anthony",
-  "Damian Lillard", "Jason Kidd",
+// The Hall of Fame, mostly -- 177 players, and not my opinion. But you have
+// to be retired for years before you are eligible, so every star playing
+// today is missing from it. Without the second list, 1948 Buddy Jeannette
+// would draw a premium and LeBron would not.
+var ACTIVE_LEGENDS = [
+  "LeBron James", "Stephen Curry", "Kevin Durant", "Giannis Antetokounmpo",
+  "Nikola Jokić", "Luka Dončić", "Joel Embiid", "James Harden",
+  "Russell Westbrook", "Kawhi Leonard", "Chris Paul", "Damian Lillard",
+  "Anthony Davis",
 ];
 
 var isLegend = {};
-LEGENDS.forEach(function (name) {
-  isLegend[name] = true;
-});
 
 // What a famous name is worth on top of the season. Small: a legend already
 // costs more, because price is built from scoring and scorers are who get
@@ -87,14 +73,55 @@ function fame(row) {
   return isLegend[row.player] ? LEGEND_BONUS : 0;
 }
 
+// The career file is the first one with commas inside a field -- a player who
+// went to two colleges has them quoted, like "College of Idaho, Seattle
+// University". Splitting on every comma would shift every column after it.
+function splitCsvLine(line) {
+  var out = [];
+  var current = "";
+  var quoted = false;
+
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') quoted = !quoted;
+    else if (ch === "," && !quoted) {
+      out.push(current);
+      current = "";
+    } else current += ch;
+  }
+
+  out.push(current);
+  return out;
+}
+
+function buildLegendIndex(csv) {
+  ACTIVE_LEGENDS.forEach(function (name) {
+    isLegend[name] = true;
+  });
+
+  var lines = csv.trim().split("\n");
+  var columns = splitCsvLine(lines[0]);
+
+  for (var i = 1; i < lines.length; i++) {
+    var row = rowToObject(splitCsvLine(lines[i]), columns);
+    if (row.hof === "TRUE") isLegend[row.player] = true;
+  }
+}
+
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
 
 var state = null;
 
 // --- Setting up ------------------------------------------------------------
 
-loadData()
-  .then(function () {
+Promise.all([
+  loadData(),
+  fetch("data/player-career-info.csv").then(function (response) {
+    return response.text();
+  }),
+])
+  .then(function (files) {
+    buildLegendIndex(files[1]);
     buildPool();
     document.getElementById("status").hidden = true;
     document.getElementById("game").hidden = false;
