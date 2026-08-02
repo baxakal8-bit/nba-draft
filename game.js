@@ -46,14 +46,41 @@ var MIN_GAMES = 40;
 var PRICE_PER_POINT = 0.924;
 var PRICE_PER_GAME = 0.0546;
 
+// How many times each player was picked for an All-Star game, over his whole
+// career. Fame, and only fame -- the fans vote, so it measures who people
+// wanted to watch rather than who was good.
+//
+// This lives here and not in data.js on purpose. The comparison page must
+// keep reporting what a season was worth; only the game pays a premium for a
+// famous name.
+var allStars = {};
+
+// Fame is worth the square root of those selections, so the first one counts
+// for a lot and the twentieth for almost nothing: 1 pick is +1, 4 is +2,
+// 9 is +3, Kareem's 19 is +4.4. Deliberately small. Famous players already
+// cost more, because price is built from scoring and scorers are who gets
+// famous. Paying them twice would turn the game into "pick the name you know".
+var FAME_BONUS = 1;
+
+function fame(row) {
+  var picks = allStars[row.player_id] || 0;
+  return picks ? FAME_BONUS * Math.sqrt(picks) : 0;
+}
+
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
 
 var state = null;
 
 // --- Setting up ------------------------------------------------------------
 
-loadData()
-  .then(function () {
+Promise.all([
+  loadData(),
+  fetch("data/all-star-selections.csv").then(function (response) {
+    return response.text();
+  }),
+])
+  .then(function (files) {
+    buildAllStarIndex(files[1]);
     buildPool();
     document.getElementById("status").hidden = true;
     document.getElementById("game").hidden = false;
@@ -62,6 +89,17 @@ loadData()
   .catch(function (error) {
     document.getElementById("status").textContent = "Could not load data: " + error.message;
   });
+
+function buildAllStarIndex(csv) {
+  var lines = csv.trim().split("\n");
+  var columns = lines[0].split(",");
+
+  for (var i = 1; i < lines.length; i++) {
+    var row = rowToObject(lines[i].split(","), columns);
+    if (row.lg !== "NBA") continue;
+    allStars[row.player_id] = (allStars[row.player_id] || 0) + 1;
+  }
+}
 
 function buildPool() {
   POSITIONS.forEach(function (position) {
@@ -75,6 +113,10 @@ function buildPool() {
 
       var score = fullScore(row);
       if (score < MIN_SCORE) return;
+
+      // The game pays a little extra for a famous name. The comparison page
+      // does not -- fullScore() is left exactly as it is.
+      score = Math.round((score + fame(row)) * 10) / 10;
 
       var price = Math.round(
         (number(row, "pts_per_game") || 0) * PRICE_PER_POINT +
