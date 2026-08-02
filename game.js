@@ -118,16 +118,28 @@ function deal() {
     candidates = candidates.concat(pool[position]);
   });
 
+  // A man cannot play two positions in the same lineup, and being offered
+  // 2020 LeBron next to 2014 LeBron is not a choice between two players. So
+  // the whole person is barred once he is drafted, and again inside a deck.
+  var seen = {};
+  POSITIONS.forEach(function (position) {
+    var pick = state.roster[position];
+    if (pick) seen[pick.row.player_id] = true;
+  });
+
+  candidates = candidates.filter(function (card) {
+    return !seen[card.row.player_id];
+  });
+
   state.deck = [];
-  var taken = {};
+  var tries = 0;
 
-  while (state.deck.length < DECK_SIZE && state.deck.length < candidates.length) {
+  while (state.deck.length < DECK_SIZE && tries < candidates.length * 4) {
+    tries++;
     var pick = candidates[Math.floor(Math.random() * candidates.length)];
-    var key = pick.row.player_id + "|" + pick.row.season;
+    if (!pick || seen[pick.row.player_id]) continue;
 
-    // The same player twice in one deck is not a choice.
-    if (taken[key]) continue;
-    taken[key] = true;
+    seen[pick.row.player_id] = true;
     state.deck.push(pick);
   }
 
