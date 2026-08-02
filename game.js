@@ -28,7 +28,12 @@ var MIN_GAMES = 40;
 // would be worth exactly what it cost and there would be nothing to decide.
 //
 // The multiplier is set so the average player costs 20, which puts five of
-// them at the 100 budget.
+// them at the 100 budget. The pool averages 17.3 points a game, and
+// 20 / 17.3 is 1.16.
+//
+// Prices are whole numbers. Nothing in this game is precise enough to earn a
+// decimal place, and round numbers are easier to add up in your head while
+// deciding whether you can still afford a centre.
 var PRICE_PER_POINT = 1.16;
 
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
@@ -61,7 +66,7 @@ function buildPool() {
       var score = fullScore(row);
       if (score < MIN_SCORE) return;
 
-      var price = Math.round((number(row, "pts_per_game") || 0) * PRICE_PER_POINT * 10) / 10;
+      var price = Math.round((number(row, "pts_per_game") || 0) * PRICE_PER_POINT);
       pool[row.pos].push({ row: row, score: score, price: price });
     });
   });
@@ -199,9 +204,12 @@ function paintRoster() {
         "<span class='slot-pos'>" + position + "</span>" +
         "<span class='slot-name'>" + pick.row.player + "</span>" +
         "<span class='slot-season'>" + pick.row.season + " " + pick.row.team + "</span>" +
-        "<span class='slot-score" + (state.over ? " is-score" : "") + "'>" +
-          (state.over ? pick.score : pick.price) +
-          "<span class='tag'>" + (state.over ? "score" : "cost") + "</span></span>";
+        "<span class='slot-numbers'>" +
+          "<span class='slot-cost'>" + pick.price + "<span class='tag'>cost</span></span>" +
+          (state.over
+            ? "<span class='slot-score'>" + pick.score + "<span class='tag'>score</span></span>"
+            : "<span class='slot-score is-hidden'>?<span class='tag'>score</span></span>") +
+        "</span>";
     } else {
       slot.innerHTML =
         "<span class='slot-pos'>" + position + "</span>" +

@@ -87,15 +87,6 @@ h2 {
   color: var(--muted);
 }
 
-.slot-score {
-  display: block;
-  margin-top: 6px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-
 .slot-empty {
   display: block;
   margin-top: 24px;
@@ -188,12 +179,31 @@ h2 {
 
 /* Cost is what you pay and score is what you got: never the same colour, so
    the number in the slot cannot be mistaken for the other one. */
+.slot-numbers {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.slot-cost,
 .slot-score {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* What you paid stays grey, what you got is the orange one. */
+.slot-cost {
   color: var(--muted);
 }
 
-.slot-score.is-score {
+.slot-score {
   color: var(--accent);
+}
+
+.slot-score.is-hidden {
+  color: var(--line);
 }
 
 /* --- the end --- */
