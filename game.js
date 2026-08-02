@@ -27,14 +27,19 @@ var MIN_GAMES = 40;
 // Finding the difference is the game. If price equalled value, every pick
 // would be worth exactly what it cost and there would be nothing to decide.
 //
-// The multiplier is set so the average player costs 20, which puts five of
-// them at the 100 budget. The pool averages 17.3 points a game, and
-// 20 / 17.3 is 1.16.
+// Games played costs money too. A man who turned up 82 times did more than
+// one who managed 45, and the Score barely notices because it is per game.
 //
-// Prices are whole numbers. Nothing in this game is precise enough to earn a
-// decimal place, and round numbers are easier to add up in your head while
-// deciding whether you can still afford a centre.
-var PRICE_PER_POINT = 1.16;
+// The split is four fifths from scoring, one fifth from turning up. The two
+// multipliers are set so the average player still costs 20, which puts five
+// of them at the 100 budget: the pool averages 17.3 points and 73.2 games, so
+// 16 / 17.3 and 4 / 73.2.
+//
+// Prices are whole numbers. Nothing here is precise enough to earn a decimal
+// place, and round numbers are easier to add up in your head while working
+// out whether you can still afford a centre.
+var PRICE_PER_POINT = 0.924;
+var PRICE_PER_GAME = 0.0546;
 
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
 
@@ -66,7 +71,10 @@ function buildPool() {
       var score = fullScore(row);
       if (score < MIN_SCORE) return;
 
-      var price = Math.round((number(row, "pts_per_game") || 0) * PRICE_PER_POINT);
+      var price = Math.round(
+        (number(row, "pts_per_game") || 0) * PRICE_PER_POINT +
+          (number(row, "g") || 0) * PRICE_PER_GAME
+      );
       pool[row.pos].push({ row: row, score: score, price: price });
     });
   });
