@@ -199,7 +199,9 @@ function paintRoster() {
         "<span class='slot-pos'>" + position + "</span>" +
         "<span class='slot-name'>" + pick.row.player + "</span>" +
         "<span class='slot-season'>" + pick.row.season + " " + pick.row.team + "</span>" +
-        "<span class='slot-score'>" + (state.over ? pick.score : pick.price) + "</span>";
+        "<span class='slot-score" + (state.over ? " is-score" : "") + "'>" +
+          (state.over ? pick.score : pick.price) +
+          "<span class='tag'>" + (state.over ? "score" : "cost") + "</span></span>";
     } else {
       slot.innerHTML =
         "<span class='slot-pos'>" + position + "</span>" +
@@ -238,7 +240,8 @@ function paintDeck() {
         stat(card.row, "blk_per_game") + " blk &middot; " +
         percent(card.row, "e_fg_percent") + " eFG" +
       "</span>" +
-      "<span class='card-price'>" + card.price + "</span>";
+      "<span class='card-price'>" + card.price +
+        "<span class='tag'>cost</span></span>";
 
     el.addEventListener("click", function () {
       choose(index);

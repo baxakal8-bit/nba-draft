@@ -176,6 +176,26 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
+.tag {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Cost is what you pay and score is what you got: never the same colour, so
+   the number in the slot cannot be mistaken for the other one. */
+.slot-score {
+  color: var(--muted);
+}
+
+.slot-score.is-score {
+  color: var(--accent);
+}
+
 /* --- the end --- */
 
 #finish {
