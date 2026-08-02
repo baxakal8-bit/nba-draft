@@ -16,14 +16,17 @@ a final score I want to beat.
 - The deck only holds players whose position is still open, so no run can dead
   end with a slot nobody can fill.
 - All five positions must be filled: PG, SG, SF, PF, C.
-- A player costs what he is worth — his Score.
-- Budget: 100.
+- Price and value are different numbers, and only the price is shown.
+  Price comes from points per game, because scoring is what a player is
+  famous for. Value is his Score, which counts everything else too.
+- Budget: 100. The average player costs 20, so five of them is the budget.
 - Run out of money and the lineup finishes short, scoring zero for the gaps.
 - Final score: the total Score of the five.
 
-The budget is the whole game. Jordan 1991 costs 45 of your 100, which leaves
-55 for four more players. Spend early or hold out — that is the decision the
-game is made of.
+The gap between price and value is the whole game. Wilt 1967 costs 27.8 and
+pays 60.7; Jerry Stackhouse 2001 costs 34.4 and pays 19.1. You are shown the
+price and the stat line, never the value, so every pick is a judgement rather
+than a subtraction.
 
 ## NOW
 
@@ -42,11 +45,29 @@ game is made of.
 - Share a run with a friend
 - Make it look good
 
-## Open question, deliberately left for the playtest
+## What the first playtest found
 
-If a player costs exactly his Score, then spending the budget well is the same
-as filling it up, and the game may turn out to be arithmetic rather than a
-choice. Raised twice before building; Bulut chose to try it and see. If it
-plays flat, the fix is to separate price from value — charge for fame (career
-length, awards) and score for production, so the game becomes hunting for
-players the price is wrong about.
+Built first with price = Score, then played 800 times by two robot strategies
+before Bulut ever touched it. It was flat, exactly as feared: the score came
+out equal to the money spent, the ceiling was the budget itself, and no
+strategy beat any other.
+
+Splitting price from value fixed it. Four strategies, 400 runs each:
+
+| Strategy            | Average | Best  |
+|---------------------|---------|-------|
+| Hunt for bargains   | 107.9   | 155.3 |
+| Random              | 96.2    | 130.7 |
+| Always the priciest | 92.0    | 132.3 |
+| Always the cheapest | 89.8    | 117.3 |
+
+Skill now beats random by 12 points and the ceiling is gone.
+
+## Still wrong
+
+- Leaving slots empty costs nothing. "Always the priciest" finishes 98% of its
+  runs with an incomplete lineup and still scores 92. The rule that all five
+  positions must be filled is written down but not enforced by anything.
+- The biggest bargains are all 1960s centres — rebounds were plentiful then,
+  so their Score inflates. The game may collapse into "always take the old
+  centre" once a player notices.

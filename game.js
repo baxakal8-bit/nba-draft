@@ -1,7 +1,8 @@
 // The draft game.
 //
-// Five rounds, five picks, one budget. A player costs what he is worth, so
-// every pick is the same question: is this one worth what it leaves me with?
+// Five rounds, five picks, one budget. You are shown what a player costs and
+// what he did on the floor, but never what he is worth -- that is the number
+// being kept from you until the end, and guessing it is the game.
 
 var POSITIONS = ["PG", "SG", "SF", "PF", "C"];
 var BUDGET = 100;
@@ -17,7 +18,20 @@ var DECK_SIZE = 5;
 var MIN_SCORE = 15;
 var MIN_GAMES = 40;
 
-var pool = {}; // { PG: [ {row, score}, ... ], ... }
+// What you pay is not what you get. Price comes from points per game, because
+// that is what a player is famous for -- highlight reels are made of scoring,
+// not of boxing out. Value comes from the Score, which counts everything.
+//
+// So a quiet player who rebounds and defends is cheap and pays well, and a
+// volume scorer on a bad night of shooting costs a fortune and pays little.
+// Finding the difference is the game. If price equalled value, every pick
+// would be worth exactly what it cost and there would be nothing to decide.
+//
+// The multiplier is set so the average player costs 20, which puts five of
+// them at the 100 budget.
+var PRICE_PER_POINT = 1.16;
+
+var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
 
 var state = null;
 
@@ -47,7 +61,8 @@ function buildPool() {
       var score = fullScore(row);
       if (score < MIN_SCORE) return;
 
-      pool[row.pos].push({ row: row, score: score });
+      var price = Math.round((number(row, "pts_per_game") || 0) * PRICE_PER_POINT * 10) / 10;
+      pool[row.pos].push({ row: row, score: score, price: price });
     });
   });
 }
@@ -58,6 +73,7 @@ function startRun() {
     roster: {}, // position -> { row, score }
     round: 1,
     deck: [],
+    over: false,
   };
 
   document.getElementById("finish").hidden = true;
@@ -97,17 +113,18 @@ function deal() {
     state.deck.push(pick);
   }
 
+  // Sorted by price, because price is all you are shown while choosing.
   state.deck.sort(function (a, b) {
-    return b.score - a.score;
+    return b.price - a.price;
   });
 }
 
 function choose(index) {
   var pick = state.deck[index];
-  if (!pick || pick.score > state.budget) return;
+  if (!pick || pick.price > state.budget) return;
 
   state.roster[pick.row.pos] = pick;
-  state.budget = Math.round((state.budget - pick.score) * 10) / 10;
+  state.budget = Math.round((state.budget - pick.price) * 10) / 10;
   state.round++;
 
   if (state.round > POSITIONS.length) return finish();
@@ -116,7 +133,7 @@ function choose(index) {
 
   // Nothing left you can pay for -- the run stops here, short of a full five.
   var affordable = state.deck.filter(function (card) {
-    return card.score <= state.budget;
+    return card.price <= state.budget;
   });
   if (!affordable.length) return finish();
 
@@ -132,6 +149,7 @@ function total() {
 }
 
 function finish() {
+  state.over = true;
   paint();
   document.getElementById("deck-title").hidden = true;
   document.getElementById("deck").innerHTML = "";
@@ -159,7 +177,9 @@ function paint() {
   document.getElementById("budget").textContent = state.budget;
   document.getElementById("round").textContent =
     Math.min(state.round, POSITIONS.length) + " / " + POSITIONS.length;
-  document.getElementById("total").textContent = total();
+  // The Score stays hidden while you are still picking. Seeing it would turn
+  // every choice into a subtraction instead of a judgement.
+  document.getElementById("total").textContent = state.over ? total() : "?";
 
   paintRoster();
   paintDeck();
@@ -179,7 +199,7 @@ function paintRoster() {
         "<span class='slot-pos'>" + position + "</span>" +
         "<span class='slot-name'>" + pick.row.player + "</span>" +
         "<span class='slot-season'>" + pick.row.season + " " + pick.row.team + "</span>" +
-        "<span class='slot-score'>" + pick.score + "</span>";
+        "<span class='slot-score'>" + (state.over ? pick.score : pick.price) + "</span>";
     } else {
       slot.innerHTML =
         "<span class='slot-pos'>" + position + "</span>" +
@@ -195,7 +215,7 @@ function paintDeck() {
   box.innerHTML = "";
 
   state.deck.forEach(function (card, index) {
-    var afford = card.score <= state.budget;
+    var afford = card.price <= state.budget;
     var el = document.createElement("button");
     el.type = "button";
     el.className = "card" + (afford ? "" : " is-broke");
@@ -205,12 +225,20 @@ function paintDeck() {
       "<span class='card-pos'>" + card.row.pos + "</span>" +
       "<span class='card-name'>" + card.row.player + "</span>" +
       "<span class='card-season'>" + card.row.season + " " + card.row.team + "</span>" +
+      // Everything the price does not already tell you. Price is built from
+      // points, so points alone would say nothing new -- the rest is where
+      // a bargain hides.
       "<span class='card-line'>" +
         stat(card.row, "pts_per_game") + " pts &middot; " +
         stat(card.row, "trb_per_game") + " reb &middot; " +
         stat(card.row, "ast_per_game") + " ast" +
       "</span>" +
-      "<span class='card-price'>" + card.score + "</span>";
+      "<span class='card-line'>" +
+        stat(card.row, "stl_per_game") + " stl &middot; " +
+        stat(card.row, "blk_per_game") + " blk &middot; " +
+        percent(card.row, "e_fg_percent") + " eFG" +
+      "</span>" +
+      "<span class='card-price'>" + card.price + "</span>";
 
     el.addEventListener("click", function () {
       choose(index);
@@ -223,6 +251,14 @@ function paintDeck() {
 function stat(row, key) {
   var value = number(row, key);
   return value === null ? "—" : value;
+}
+
+function percent(row, key) {
+  // Before 1980 there is no eFG% column, but with no three point line it is
+  // the same number as FG%.
+  var value = number(row, key);
+  if (value === null) value = number(row, "fg_percent");
+  return value === null ? "—" : Math.round(value * 100) + "%";
 }
 
 document.getElementById("again").addEventListener("click", startRun);
