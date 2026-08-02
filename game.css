@@ -135,6 +135,13 @@ h2 {
   color: var(--muted);
 }
 
+.legend {
+  margin-left: 5px;
+  color: var(--gold);
+  font-size: 0.72rem;
+  vertical-align: -1px;
+}
+
 .card-name {
   display: block;
   margin-top: 8px;

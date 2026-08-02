@@ -46,25 +46,45 @@ var MIN_GAMES = 40;
 var PRICE_PER_POINT = 0.924;
 var PRICE_PER_GAME = 0.0546;
 
-// How many times each player was picked for an All-Star game, over his whole
-// career. Fame, and only fame -- the fans vote, so it measures who people
-// wanted to watch rather than who was good.
+// The famous ones, by hand.
 //
-// This lives here and not in data.js on purpose. The comparison page must
-// keep reporting what a season was worth; only the game pays a premium for a
-// famous name.
-var allStars = {};
+// This started as a count of All-Star selections, which was wrong: Rudy
+// Gobert has three of them and nobody would call him a legend. Fame is not a
+// number in this dataset, so it is a list, and the list is a judgement.
+//
+// Add or remove names freely -- that is the point of it being here and not
+// computed. Spelling has to match the data exactly, accents included.
+var LEGENDS = [
+  "Michael Jordan", "LeBron James", "Kareem Abdul-Jabbar", "Magic Johnson",
+  "Larry Bird", "Bill Russell", "Wilt Chamberlain", "Shaquille O'Neal",
+  "Kobe Bryant", "Tim Duncan", "Hakeem Olajuwon", "Stephen Curry",
+  "Kevin Durant", "Oscar Robertson", "Jerry West", "Moses Malone",
+  "Julius Erving", "Karl Malone", "Charles Barkley", "Allen Iverson",
+  "Dwyane Wade", "Dirk Nowitzki", "Giannis Antetokounmpo", "Nikola Jokić",
+  "Isiah Thomas", "Scottie Pippen", "David Robinson", "Patrick Ewing",
+  "John Stockton", "Kevin Garnett", "Steve Nash", "Elgin Baylor",
+  "Rick Barry", "Clyde Drexler", "Reggie Miller", "Ray Allen",
+  "Paul Pierce", "Russell Westbrook", "James Harden", "Anthony Davis",
+  "Luka Dončić", "Joel Embiid", "Kawhi Leonard", "Chris Paul",
+  "Vince Carter", "Tracy McGrady", "Dennis Rodman", "Carmelo Anthony",
+  "Damian Lillard", "Jason Kidd",
+];
 
-// Fame is worth the square root of those selections, so the first one counts
-// for a lot and the twentieth for almost nothing: 1 pick is +1, 4 is +2,
-// 9 is +3, Kareem's 19 is +4.4. Deliberately small. Famous players already
-// cost more, because price is built from scoring and scorers are who gets
-// famous. Paying them twice would turn the game into "pick the name you know".
-var FAME_BONUS = 1;
+var isLegend = {};
+LEGENDS.forEach(function (name) {
+  isLegend[name] = true;
+});
+
+// What a famous name is worth on top of the season. Small: a legend already
+// costs more, because price is built from scoring and scorers are who get
+// famous. This is a thumb on the scale, not the scale.
+//
+// It only applies here. The comparison page reports what a season was worth,
+// and no reputation is added to it.
+var LEGEND_BONUS = 3;
 
 function fame(row) {
-  var picks = allStars[row.player_id] || 0;
-  return picks ? FAME_BONUS * Math.sqrt(picks) : 0;
+  return isLegend[row.player] ? LEGEND_BONUS : 0;
 }
 
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
@@ -73,14 +93,8 @@ var state = null;
 
 // --- Setting up ------------------------------------------------------------
 
-Promise.all([
-  loadData(),
-  fetch("data/all-star-selections.csv").then(function (response) {
-    return response.text();
-  }),
-])
-  .then(function (files) {
-    buildAllStarIndex(files[1]);
+loadData()
+  .then(function () {
     buildPool();
     document.getElementById("status").hidden = true;
     document.getElementById("game").hidden = false;
@@ -89,17 +103,6 @@ Promise.all([
   .catch(function (error) {
     document.getElementById("status").textContent = "Could not load data: " + error.message;
   });
-
-function buildAllStarIndex(csv) {
-  var lines = csv.trim().split("\n");
-  var columns = lines[0].split(",");
-
-  for (var i = 1; i < lines.length; i++) {
-    var row = rowToObject(lines[i].split(","), columns);
-    if (row.lg !== "NBA") continue;
-    allStars[row.player_id] = (allStars[row.player_id] || 0) + 1;
-  }
-}
 
 function buildPool() {
   POSITIONS.forEach(function (position) {
@@ -299,7 +302,9 @@ function paintDeck() {
     el.disabled = !afford;
 
     el.innerHTML =
-      "<span class='card-pos'>" + card.row.pos + "</span>" +
+      "<span class='card-pos'>" + card.row.pos +
+        (fame(card.row) ? "<span class='legend' title='legend'>&#9733;</span>" : "") +
+      "</span>" +
       "<span class='card-name'>" + card.row.player + "</span>" +
       "<span class='card-season'>" + card.row.season + " " + card.row.team + "</span>" +
       // Everything the price does not already tell you. Price is built from
