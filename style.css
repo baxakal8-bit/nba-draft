@@ -4,6 +4,9 @@
   --line: #1f2937;
   --text: #e8ecf3;
   --muted: #7d8797;
+  /* Between the two. For text that is not a heading but still has to be read
+     rather than glanced at -- a stat line is the whole reason a card exists. */
+  --stat: #cbd4e1;
   --accent: #ff6b1a;
   --gold: #f5c451;
 }

@@ -90,8 +90,43 @@ run now finishes with five.
 The ceiling went up, not down: three stars and two scrubs is now a legal
 lineup, and a good one.
 
+## The third playtest — the old centres
+
+Every bargain on the board was a 1960s centre. Not because they were better:
+a rotation player took 7.67 rebounds a game in 1960 and takes 5.05 today, so
+there was simply more to collect, and the Score counts rebounds.
+
+A rebound is now divided by what a rebound was worth that season -- 0.65 in
+1960, 0.86 in 1975, 1.00 today -- and the multipliers come from the data, so
+a new season adjusts itself and no line is drawn at a decade. Wilt 1967 fell
+from 60.7 to 56.5, modern seasons did not move, and eight of the twelve best
+bargains are now post-1990. Ben Wallace took over the top of the list, which
+is the game working: 6.9 points a game, and everything else.
+
+## What the score means
+
+A number on its own says nothing, so every final score is read as a season:
+121 is 51-31, 175 is 73-9. `records.js` names a team that really finished
+there, taken from `data/team-summaries.csv`.
+
+The list was hand written first and 29 of its 63 lines were wrong. Checking
+it against the real table is the only reason the game does not confidently
+name the wrong team.
+
+## Rules added since
+
+- **A record to beat.** The best run is remembered between visits. Two of
+  them: playing with the scores shown is not the same game.
+- **Five lifelines, one use each.** Shuffle, reveal this board, double dip,
+  other years (same names, new seasons), and sell a man back for his salary.
+- **Two positions.** 35% of seasons can fill a second slot, taken from the
+  career file. Drafted men can be moved, and two who play each other's
+  positions can swap.
+- **Natural position, +2.** Playing where he belongs earns it; borrowed for
+  the box next door he is worth exactly what the season was worth.
+
 ## Still wrong
 
-- The biggest bargains are all 1960s centres — rebounds were plentiful then,
-  so their Score inflates. The game may collapse into "always take the old
-  centre" once a player notices.
+- 73-9 is the ceiling and the theoretical perfect lineup is 239, so every
+  point above 175 is thrown away. Records beyond the real one -- 74-8 up to
+  82-0 -- would give them somewhere to go.

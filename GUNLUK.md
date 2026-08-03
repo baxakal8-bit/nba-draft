@@ -1,3 +1,69 @@
+## 2026-08-03 — 5. oturum
+**Bugünün işi:** 60'ların ribaundunu düzeltmek
+
+**Ne yaptım:** Kelepir listesinin tamamı 60'ların pivotuydu. Sebebi o dönemde
+ribaundun bol olması — 1960'ta 20+ dakika oynayan biri maç başına 7.67 ribaund
+alıyor, bugün 5.05. Kimse ribaundu unutmadı, sadece toplanacak top çoktu.
+
+İki yol vardı: 60-70 arasına sabit bir çarpan koymak, ya da her sezonu kendi
+lig ortalamasına bölmek. İkincisini seçtim çünkü ilkinde sınırı ben uyduruyor
+oldum — 1974 ×0.7, 1975 ×1.0 olması saçma. Şimdi çarpan veriden çıkıyor: 1960
+için 0.65, 1975 için 0.86, bugün 1.00. Wilt 1967 60.7'den 56.5'e indi, modern
+oyuncular kılını kıpırdatmadı, kelepir listesinin 12'sinin 8'i modern oldu.
+
+Sonra bugünkü işten saptım ve beş şey daha yaptım:
+
+1. Skoru NBA rekoruna çeviren bir tablo (`records.js`). 121 puan = 51-31,
+   175 = 73-9. Her galibiyet sayısı için o rekoru gerçekten yapmış bir takım
+   yazıyor, en yenisi seçiliyor.
+2. En iyi skor hafızası. Skorlar açık ve kapalı için ayrı rekor tutuluyor,
+   çünkü açıkken oynamak aynı oyun değil.
+3. Beş joker: shuffle, reveal, double dip, other years (aynı isimler başka
+   sezonlar), sell (oyuncuyu geri sat, parayı al).
+4. İki pozisyonlu oyuncular. Sezon dosyası tek pozisyon veriyor ama kariyer
+   dosyasında G-F, F-C gibi ikili etiketler var — 7998 oyuncu-sezonu (%35)
+   iki pozisyonlu oldu. Kadroda taşıma ve takas ekledim, ve kendi
+   pozisyonunda oynayana +2 bonus koyduk.
+5. Denge ayarı: fiyatlar %10 ucuzladı, sonra bir %10 daha ucuzlattım ama geri
+   aldım çünkü çok kolay oldu. 73-9 eşiği 185'ten 175'e indi.
+
+En sonunda **72-10** attım. 1996 Bulls. Kadro: Luka, Kobe, Rodman, Duncan,
+Steven Adams — üç tane az sayı atan büyük adam, iki yıldız.
+
+**Ne bozdum / yanlış yaptım:** İki tane sessiz hata çıktı, ikisi de hata
+vermeden çalışıyordu.
+
+Birincisi Claude'un yazdığı tekilleştirme koduydu: oyuncuyu `player_id` ile
+eşliyordu, yani bir oyuncunun bütün sezonlarını teke indiriyordu. Kod
+çalışıyordu ama her oyunda 20 puan eksik veriyordu. Robotla ölçmeseydik fark
+etmezdik.
+
+İkincisi benim fark ettiğim: bir oyuncuyu C'ye aldıktan sonra PF/C olan
+birini PF'ye alınca puanı düşüyordu. Meğer o adamın gerçek pozisyonu C'ymiş,
+C dolu olduğu için PF'ye ödünç giriyormuş, +2 alamıyormuş. Kart iki durumda
+da aynı görünüyordu. Şimdi kart hep gerçek pozisyonu önce yazıyor.
+
+Bir de rekor listesini bir yapay zekâya sordurmuştum, 63 satırın 29'u
+yanlıştı — 2015 Jazz'a 28-54 demiş, gerçek 38-44. Elimizdeki gerçek takım
+verisiyle karşılaştırınca çıktı. Doğrulamasaydık oyun yanlış takım
+söyleyecekti.
+
+**Yarım kalan:** 73-9 hâlâ tavan, üstüne 82-0'a kadar devam etme fikri duruyor.
+Teorik tavan 239 puan, yani 175'in çok üstünde yer var. Commit yok, repo yok.
+
+**Babama sorum:** yok
+
+**Keyif:** evet
+
+**Kavram kontrolü:**
+- Çarpanı sayıya mı ağırlığa mı uygulasak (ikisi aynı mı)? → kendi buldu,
+  "3x5x4 = 4x3x5" dedi ✅
+- Fiyatı ucuzlatmak neden işe yaramadı? → parayı harcayamadığını gösterince
+  oturdu 🔸
+- Veriyi doğrulamak → yapay zekânın uydurduğu listeyi görünce anladı ✅
+
+---
+
 ## 2026-08-02 — 4. oturum
 **Bugünün işi:** Oyunu yapmak
 
@@ -184,3 +250,8 @@ bozuldu, o yüzden basit halde bıraktık ve sayfada açıkça yazdık.
 - CSV'de tırnak içindeki virgül — 2 Ağu 🔸
 - sessiz hata / konsola bakmak — 2 Ağu 🔸
 - robotla oynatıp ölçmek (playtest) — 2 Ağu ✅
+- dönem düzeltmesi (bir sayıyı kendi çağına bölmek) — 3 Ağu ✅
+- çarpma sırası değişmez (kommutatiflik) — 3 Ağu ✅
+- veriyi kaynağıyla doğrulamak — 3 Ağu ✅
+- bağlayıcı olmayan kısıt (parayı harcayamamak) — 3 Ağu 🔸
+- çalışan ama yanlış kod — 3 Ağu 🔸

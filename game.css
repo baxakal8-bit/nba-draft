@@ -123,7 +123,7 @@ h2.is-scrap {
 
 .slot-stats .card-line {
   margin-top: 0;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
 }
 
 .slot-stats .card-line + .card-line {
@@ -133,6 +133,37 @@ h2.is-scrap {
 .slot.is-filled:hover .slot-stats {
   opacity: 1;
   visibility: visible;
+}
+
+/* Same man, same salary, different box. Quiet until you want it. */
+.slot-move {
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  padding: 4px 8px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.slot-move:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* Selling is the one thing here you cannot undo, so it does not look like the
+   move button sitting next to it. */
+.slot-move.is-sell {
+  margin-left: 4px;
+}
+
+.slot-move.is-sell:hover {
+  border-color: var(--gold);
 }
 
 .slot-empty {
@@ -202,6 +233,84 @@ h2.is-scrap {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- the lifelines --- */
+
+#deck-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+#lifelines {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 36px 0 14px;
+}
+
+/* Says once what would otherwise have to be repeated on all five buttons. */
+#lifeline-label {
+  align-self: center;
+  padding-right: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.lifeline {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  padding: 8px 12px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.lifeline:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.lifeline-hint {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* Spent stays on the screen rather than disappearing, so you can see what you
+   have left without counting. */
+.lifeline:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.lifeline.is-spent {
+  text-decoration: line-through;
+}
+
+/* Sell is armed and waiting for you to point at somebody. */
+.lifeline.is-armed {
+  color: #12141a;
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.lifeline.is-armed .lifeline-hint {
+  color: #12141a;
+}
+
 #deck {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -233,6 +342,18 @@ h2.is-scrap {
   cursor: not-allowed;
 }
 
+/* Why this one is out of reach, when the reason is not the money. */
+.card-why {
+  color: var(--accent);
+}
+
+/* The other position he can play. Same colour as the first one: it is not a
+   footnote, it is somewhere he can actually be moved to. */
+.card-alt {
+  color: inherit;
+}
+
+
 .card-pos {
   display: block;
   font-size: 0.72rem;
@@ -256,11 +377,14 @@ h2.is-scrap {
   color: var(--muted);
 }
 
+/* The numbers you actually play on. Bigger and brighter than the rest of the
+   card, because everything else -- name, season, team -- is decoration next
+   to these six figures. */
 .card-line {
   display: block;
-  margin-top: 9px;
-  font-size: 0.8rem;
-  color: var(--muted);
+  margin-top: 10px;
+  font-size: 0.88rem;
+  color: var(--stat);
   font-variant-numeric: tabular-nums;
 }
 
@@ -320,14 +444,33 @@ h2.is-scrap {
   border-top: 1px solid var(--line);
 }
 
+/* The record is the headline and the score is the footnote, not the other way
+   round. 55-27 is a season you can picture; 134.9 is arithmetic. */
 #verdict {
-  font-size: 1.05rem;
   margin: 0 0 18px;
 }
 
 #verdict strong {
+  display: block;
   color: var(--accent);
-  font-size: 1.6rem;
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-team {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.15rem;
+  color: var(--gold);
+}
+
+.verdict-tail {
+  display: block;
+  margin-top: 14px;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
 #again {

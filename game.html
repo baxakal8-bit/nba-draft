@@ -33,11 +33,35 @@
           <span class="meter-label">Score</span>
           <span class="meter-value" id="total">0</span>
         </div>
+        <div class="meter">
+          <span class="meter-label">Best</span>
+          <span class="meter-value" id="best">—</span>
+        </div>
       </div>
 
       <div id="roster"></div>
 
-      <h2 id="deck-title">Pick one</h2>
+      <div id="deck-head">
+        <h2 id="deck-title">Pick one</h2>
+        <div id="lifelines">
+          <span id="lifeline-label">Lifelines<span class="lifeline-hint">one use each</span></span>
+          <button type="button" class="lifeline" data-use="shuffle">
+            Shuffle<span class="lifeline-hint">a new board</span>
+          </button>
+          <button type="button" class="lifeline" data-use="reveal">
+            Reveal<span class="lifeline-hint">scores on this board</span>
+          </button>
+          <button type="button" class="lifeline" data-use="double">
+            Double dip<span class="lifeline-hint">two from this board</span>
+          </button>
+          <button type="button" class="lifeline" data-use="years">
+            Other years<span class="lifeline-hint">same names, new seasons</span>
+          </button>
+          <button type="button" class="lifeline" data-use="sell">
+            Sell<span class="lifeline-hint">refund one of yours</span>
+          </button>
+        </div>
+      </div>
       <div id="deck"></div>
 
       <div id="finish" hidden>
@@ -47,6 +71,7 @@
     </div>
 
     <script src="score.js"></script>
+    <script src="records.js"></script>
     <script src="data.js"></script>
     <script src="game.js"></script>
   </body>
