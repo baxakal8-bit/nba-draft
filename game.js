@@ -125,6 +125,83 @@ function buildLegendIndex(csv) {
   }
 }
 
+// Rebounds are not worth the same in every era.
+//
+// In 1960 a rotation player took 7.67 boards a game; today he takes 5.05.
+// Nobody got worse at rebounding -- teams shot more and missed more, so there
+// was simply more to collect. The Score counts rebounds, so it hands the old
+// centres a fortune: Wilt 1967 pays 60.7 and costs $27M, and once you notice
+// that the game becomes "always take the old centre" and stops being a game.
+//
+// So a rebound is measured against what a rebound was worth that season. The
+// multiplier is the modern average divided by that season's average: 0.66 in
+// 1960, 0.87 in 1975, 0.98 in 2020. No line drawn at a decade -- rebounds
+// faded slowly, so the correction fades slowly too. And the numbers come out
+// of the data, so a new season adjusts itself.
+//
+// The game only. The comparison page reports what a season was, not what it
+// would have been somewhere else.
+var REFERENCE_SEASONS = 10;
+var ERA_MIN_MINUTES = 20; // a rotation player, not the man who played twice
+var eraRebound = {}; // season -> multiplier
+
+function buildEraIndex() {
+  var totals = {}; // season -> { sum, count }
+
+  Object.keys(playersByName).forEach(function (name) {
+    playersByName[name].forEach(function (row) {
+      var trb = number(row, "trb_per_game");
+      if (trb === null) return;
+      if ((number(row, "g") || 0) < MIN_GAMES) return;
+      if ((number(row, "mp_per_game") || 0) < ERA_MIN_MINUTES) return;
+
+      var bucket = totals[row.season] || (totals[row.season] = { sum: 0, count: 0 });
+      bucket.sum += trb;
+      bucket.count++;
+    });
+  });
+
+  var seasons = Object.keys(totals).sort();
+  var average = {};
+  seasons.forEach(function (season) {
+    average[season] = totals[season].sum / totals[season].count;
+  });
+
+  // Today is the ruler, so a modern season comes out at roughly 1 and the
+  // scores you already know barely move.
+  var recent = seasons.slice(-REFERENCE_SEASONS);
+  var reference =
+    recent.reduce(function (sum, season) {
+      return sum + average[season];
+    }, 0) / recent.length;
+
+  seasons.forEach(function (season) {
+    eraRebound[season] = reference / average[season];
+  });
+}
+
+// What the era costs this player, in points of Score. Only his rebounding is
+// touched; scoring, passing and defence are left alone.
+function eraAdjust(row) {
+  var factor = eraRebound[row.season];
+  if (!factor) return 0;
+
+  var orb = number(row, "orb_per_game");
+  var drb = number(row, "drb_per_game");
+  var boards;
+
+  if (orb === null || drb === null) {
+    // Before 1974 rebounds were not split, and the Score uses the blend.
+    var trb = number(row, "trb_per_game");
+    if (trb === null) return 0;
+    boards = trb * TRB_WEIGHT;
+  } else {
+    boards = orb * WEIGHTS.orb_per_game + drb * WEIGHTS.drb_per_game;
+  }
+
+  return boards * (factor - 1);
+}
+
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
 var scrapPool = {}; // the same shape, built to a much lower floor
 var floorPrice = {}; // the cheapest anybody can be had for, per position
@@ -149,6 +226,7 @@ Promise.all([
 ])
   .then(function (files) {
     buildLegendIndex(files[1]);
+    buildEraIndex();
     buildPool();
     document.getElementById("status").hidden = true;
     document.getElementById("game").hidden = false;
@@ -171,7 +249,7 @@ function buildPool() {
       var games = number(row, "g") || 0;
       if (games < SCRAP_MIN_GAMES) return;
 
-      var base = fullScore(row);
+      var base = Math.round((fullScore(row) + eraAdjust(row)) * 10) / 10;
       if (base < SCRAP_MIN_SCORE) return;
 
       // The game pays a little extra for a famous name. The comparison page
