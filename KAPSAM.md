@@ -156,6 +156,11 @@ was never available.
     say less than it looks like it does.
   - Check first whether any of these cover the old seasons. Probably not.
 
+- Should the Score know how many games were played? It is built entirely out
+  of per-game numbers, so two games at -0.1 and eighty-two games at -0.1 come
+  out equal, even though one man hurt his team twice and the other all season.
+  Micheal Williams 1999 is the case that raised it: two games, one offensive
+  rebound, one turnover, and the whole Score is those two events.
 - The 82-0 game: wheel, 5 rounds, team/era draft, season simulation
 - Persist things across reloads (`localStorage`)
 - Compare more than two players at once

@@ -64,7 +64,7 @@ h2.is-scrap {
 
 .slot {
   position: relative;
-  min-height: 92px;
+  min-height: 166px;
   padding: 10px;
   background: var(--panel);
   border: 1px dashed var(--line);
@@ -83,6 +83,12 @@ h2.is-scrap {
   font-weight: 800;
   letter-spacing: 0.12em;
   color: var(--muted);
+}
+
+.slot-photo {
+  width: 36px;
+  height: 54px;
+  margin-top: 8px;
 }
 
 .slot-name {
@@ -164,6 +170,21 @@ h2.is-scrap {
 
 .slot-move.is-sell:hover {
   border-color: var(--gold);
+}
+
+/* What he plays, his own position first -- so a man sitting in the box he
+   does not belong to still says where he does belong. */
+.slot-plays {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--stat);
+}
+
+.slot-plays-alt {
+  color: var(--muted);
 }
 
 .slot-empty {
@@ -317,13 +338,41 @@ h2.is-scrap {
   gap: 10px;
 }
 
+/* Holds the card and the magnifying glass that sits on its corner. */
+.card-wrap {
+  position: relative;
+}
+
+.peek {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
+}
+
+.peek:hover {
+  opacity: 1;
+  border-color: var(--gold);
+}
+
 .card {
   font: inherit;
   color: var(--text);
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 18px 14px 20px;
+  padding: 18px 11px 20px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -362,6 +411,14 @@ h2.is-scrap {
   color: var(--muted);
 }
 
+/* 120x180 is what the source sends, and 72x108 is the same shape half the
+   size -- any other pair of numbers would squash a face. */
+.card-photo {
+  width: 72px;
+  height: 108px;
+  margin-top: 10px;
+}
+
 .card-name {
   display: block;
   margin-top: 10px;
@@ -381,11 +438,26 @@ h2.is-scrap {
    card, because everything else -- name, season, team -- is decoration next
    to these six figures. */
 .card-line {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px 4px;
   margin-top: 10px;
   font-size: 0.88rem;
   color: var(--stat);
   font-variant-numeric: tabular-nums;
+}
+
+.stat {
+  display: block;
+  white-space: nowrap;
+}
+
+/* The unit is not the number. Small and grey so the eye lands on the figure
+   and only reads "reb" if it needs to. */
+.stat-label {
+  margin-left: 3px;
+  font-size: 0.68em;
+  color: var(--muted);
 }
 
 .card-price {
@@ -466,11 +538,87 @@ h2.is-scrap {
   color: var(--gold);
 }
 
+/* Past the real record there is no team to compare you to. */
+.verdict-team.is-unheard {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* The whole lineup's night, in the same columns the cards used. */
+.verdict-team-line {
+  display: block;
+  max-width: 380px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.verdict-team-line .card-line {
+  font-size: 1.1rem;
+}
+
 .verdict-tail {
   display: block;
   margin-top: 14px;
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+/* Second to the play button, because copying a link is what you do after you
+   are done, not instead of playing. */
+#share {
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  margin-left: 8px;
+  padding: 11px 20px;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#share:hover {
+  border-color: var(--gold);
+}
+
+/* --- somebody else's team, opened from a link --- */
+
+/* A visitor cannot pick, cannot spend and cannot hide a score, so none of the
+   controls are shown to them. What is left is a record, a stat line and five
+   men -- which is the whole of what a shared team is. */
+#game.is-shared #bar,
+#game.is-shared #deck-head,
+#game.is-shared #deck,
+#top.is-shared #reveal {
+  display: none;
+}
+
+/* The verdict has moved to the top, so it loses the rule that separated it
+   from the deck and gains room underneath instead. */
+#game.is-shared #finish {
+  margin: 0 0 28px;
+  padding-top: 0;
+  border-top: none;
+}
+
+#game.is-shared #roster {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+/* Nothing above it any more, so the record starts the page. */
+#game.is-shared #verdict strong {
+  font-size: 3.6rem;
+}
+
+/* Nobody is drafting here, so the boxes are evidence rather than slots. */
+#game.is-shared .slot {
+  border-style: solid;
 }
 
 #again {

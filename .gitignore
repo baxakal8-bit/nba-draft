@@ -1,1 +1,6 @@
+# Headshots the local server caches while you play. The pages load faces
+# straight from the source now, so these are a convenience for this machine
+# and nothing the repo needs.
+data/headshots/
+
 .DS_Store

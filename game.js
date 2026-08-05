@@ -15,12 +15,21 @@ var DECK_SIZE = 15;
 // the table worth choosing from.
 //
 // Where to put it is a trade. Lower means a wider table, and with fifteen
-// cards a wider table actually rewards knowing what to look for -- the gap
-// between hunting bargains and picking at random grows from 21 points at a
-// floor of 15 to 30 at a floor of 5. But it also means more cheap players, so
-// the money stops running out: average budget left over goes from 13 to 21.
-// Ten keeps both -- a pool of 10,240 and a budget that still bites.
-var MIN_SCORE = 10;
+// cards a wider table rewards knowing what to look for. But it also means
+// more cheap players, so the money stops running out. Ten keeps both: a
+// budget that still bites, and 45% of every season ever played on the table.
+//
+// One floor per position, because one floor for everybody was not fair.
+//
+// At a flat 10 the pools came out PG 1970, SG 2883, SF 2795, PF 3105, C 3225
+// -- a centre was two thirds more likely to be dealt than a point guard. Not
+// because centres were better players, but because the Score counts rebounds
+// and blocks, which is what tall men collect, so more of them clear any given
+// bar. The deck was quietly a big man's game.
+//
+// Raising the bar for the two positions that were over-represented evens them
+// out: 2755 power forwards and 2742 centres against 2795 small forwards.
+var MIN_SCORE = { PG: 10, SG: 10, SF: 10, PF: 11, C: 11.5 };
 var MIN_GAMES = 40;
 
 // The second pool, dealt from only when the money is gone.
@@ -65,7 +74,9 @@ var SCRAP_MIN_GAMES = 10;
 // A second tenth came off and went straight back on. It only moved one kind
 // of player: somebody buying the best card every round gained twelve points,
 // because two stars in a row became affordable. That is the whole game, so
-// making it free ruined it.
+// making it free ruined it. Half of that tenth went back on afterwards, which
+// buys about four million across a lineup -- enough to reach one card you
+// could not quite afford, not enough to reach two.
 //
 // Prices are whole numbers, rounded down rather than to the nearest. Nothing
 // here is precise enough to earn a decimal place, and round numbers are
@@ -73,8 +84,8 @@ var SCRAP_MIN_GAMES = 10;
 // afford a centre. Down rather than nearest takes about half a million off
 // every man, which is two and a half across a lineup -- small, and always in
 // your favour.
-var PRICE_PER_POINT = 0.832;
-var PRICE_PER_GAME = 0.0491;
+var PRICE_PER_POINT = 0.790;
+var PRICE_PER_GAME = 0.0466;
 
 // Who counts as famous.
 //
@@ -288,6 +299,7 @@ function eraAdjust(row) {
 
 var pool = {}; // { PG: [ {row, score, price}, ... ], ... }
 var scrapPool = {}; // the same shape, built to a much lower floor
+var cardFor = {}; // "player_id|season|position" -> the card, for reading a shared link
 var seasonsByPlayer = {}; // player_id -> every card he has, any season, any slot
 var floorPrice = {}; // the cheapest anybody can be had for, per position
 
@@ -325,7 +337,12 @@ Promise.all([
     buildPool();
     document.getElementById("status").hidden = true;
     document.getElementById("game").hidden = false;
-    startRun();
+
+    // A link with a team in it opens that team instead of dealing a new one.
+    // A broken or empty one just starts a game, which is the friendlier way
+    // to fail.
+    var shared = /^#team=(.+)$/.exec(location.hash);
+    if (!shared || !showShared(shared[1])) startRun();
   })
   .catch(function (error) {
     document.getElementById("status").textContent = "Could not load data: " + error.message;
@@ -377,7 +394,8 @@ function buildPool() {
         };
 
         scrapPool[position].push(card);
-        if (base >= MIN_SCORE && games >= MIN_GAMES) pool[position].push(card);
+        cardFor[row.player_id + "|" + row.season + "|" + position] = card;
+        if (base >= MIN_SCORE[position] && games >= MIN_GAMES) pool[position].push(card);
 
         // Every card a man has, so the "other years" lifeline can find him
         // again in a season you have not been offered.
@@ -410,6 +428,14 @@ function buildPool() {
 // and the last rounds are played with nothing left.
 var LIFELINES = ["shuffle", "reveal", "double", "years", "sell"];
 
+// Peeks are the sixth, and the only one you get more than once.
+//
+// The others change the board. This one changes what you know about it: five
+// times a run you can turn over a single card and see what it is really
+// worth. Five across five rounds is one a round if you spread them, or the
+// whole round revealed if you spend them at once -- which is the choice.
+var PEEKS = 5;
+
 function startRun() {
   state = {
     budget: BUDGET,
@@ -422,6 +448,8 @@ function startRun() {
     revealed: false, // the reveal lifeline, and only for the board it was used on
     doubleDip: null, // null | "armed" | "spending"
     selling: false, // sell is armed and waiting to be pointed at a man
+    peeks: PEEKS, // single cards left to turn over
+    peeked: {}, // and the ones already turned
   };
 
   document.getElementById("finish").hidden = true;
@@ -431,6 +459,33 @@ function startRun() {
 }
 
 // --- Playing ---------------------------------------------------------------
+
+// Filled boxes next door to an open one.
+//
+// The deck used to hold nothing but men who could be picked right now, which
+// meant that the moment you filled point guard you would never be shown
+// another one -- Luka simply stopped existing for the rest of the run. Now a
+// few of them come anyway, marked "filled" and unpickable, and the way to
+// take one is to move the man already standing there into his other position.
+//
+// Neighbours only, along the PG-SG-SF-PF-C line, because that is the shuffle
+// that tends to be possible: a shooting guard slides to small forward far
+// more often than to centre.
+var NEIGHBOUR_CARDS = 5;
+
+function neighbourPositions() {
+  var open = openPositions();
+  var wanted = {};
+
+  open.forEach(function (position) {
+    var i = POSITIONS.indexOf(position);
+    [POSITIONS[i - 1], POSITIONS[i + 1]].forEach(function (side) {
+      if (side && state.roster[side]) wanted[side] = true;
+    });
+  });
+
+  return Object.keys(wanted);
+}
 
 function openPositions() {
   return POSITIONS.filter(function (position) {
@@ -471,6 +526,13 @@ function slotFor(card) {
   return null;
 }
 
+// The box a card would land in if you took it right now. Falls back to his own
+// position when both of his are spoken for: the card is unpickable then, but it
+// still has to say what it is worth.
+function landingSlot(card) {
+  return slotFor(card) || card.row.pos;
+}
+
 function canAfford(card) {
   var slot = slotFor(card);
   if (!slot) return false;
@@ -492,29 +554,76 @@ function canPick(card) {
 function deal() {
   var open = openPositions();
 
-  state.deck = draw(pool, open, null);
-  state.revealed = false; // a new board, so the reveal you paid for is over
+  var taken = {};
+  function fresh(card) {
+    return !taken[card.row.player_id];
+  }
+  function keep(cards) {
+    cards.forEach(function (card) {
+      taken[card.row.player_id] = true;
+    });
+    state.deck = state.deck.concat(cards);
+  }
 
+  // Most of the board is men you can take right now.
+  state.deck = [];
+  keep(draw(pool, open, null, DECK_SIZE - NEIGHBOUR_CARDS));
+
+  // Then the neighbours, barred by the man already in their box rather than
+  // by the money, so they arrive greyed until you move him.
+  //
+  // From the ordinary pool, not the bargain bin. Drawn from the bin they only
+  // had to clear the score floor, which let through men the ordinary deck
+  // would never offer: a rookie with twenty games, or a legend whose fame
+  // bonus lifted him over a line his season did not reach. A card you cannot
+  // take yet should still be a card you could have been dealt.
+  keep(draw(pool, neighbourPositions(), fresh, DECK_SIZE - state.deck.length));
+
+  // On the first round nothing is filled, so there are no neighbours and the
+  // rest of the fifteen comes from the open positions after all.
+  keep(draw(pool, open, fresh, DECK_SIZE - state.deck.length));
+
+  state.revealed = false; // a new board, so the reveal you paid for is over
   state.scrap = false;
 
   // Nothing on the table is affordable, so the table changes rather than the
   // game ending. Same positions, lower floor, and only cards the remaining
   // money can actually reach.
-  if (!state.deck.some(canAfford)) {
-    var cheap = draw(scrapPool, open, canAfford);
+  if (!state.deck.some(canPick)) {
+    var cheap = draw(scrapPool, open, canPick, DECK_SIZE);
     if (cheap.length) {
       state.deck = cheap;
       state.scrap = true;
     }
   }
 
-  // Sorted by price, because price is all you are shown while choosing.
-  state.deck.sort(function (a, b) {
-    return b.price - a.price;
-  });
 }
 
-function draw(source, open, allow) {
+// The order the fifteen are read in. It is not decided here but at the moment
+// they are drawn, because a board is not a thing that happens once: a double
+// dip takes a man off it, the years lifeline swaps every season on it, and
+// moving a drafted man hands the natural bonus to somebody else. Sorting on
+// the event that dealt the board leaves the numbers moving underneath a
+// frozen order -- which is exactly what it looked like, scores out of order
+// on a board that said it was sorted by them.
+//
+// Salary while you are still guessing, because salary is all you are shown.
+// Once the scores are up salary is no longer what you are choosing on, and
+// fifteen scores scattered in salary order is a puzzle you have already paid
+// to stop solving.
+function sortDeck() {
+  if (boardRevealed()) {
+    state.deck.sort(function (a, b) {
+      return worth(b, landingSlot(b)) - worth(a, landingSlot(a));
+    });
+  } else {
+    state.deck.sort(function (a, b) {
+      return b.price - a.price;
+    });
+  }
+}
+
+function draw(source, open, allow, howMany) {
   var candidates = [];
 
   open.forEach(function (position) {
@@ -563,8 +672,9 @@ function draw(source, open, allow) {
 
   var deck = [];
   var tries = 0;
+  var wanted = howMany === undefined ? DECK_SIZE : howMany;
 
-  while (deck.length < DECK_SIZE && tries < candidates.length * 4) {
+  while (deck.length < wanted && tries < candidates.length * 4) {
     tries++;
     var pick = candidates[Math.floor(Math.random() * candidates.length)];
     if (!pick || seen[pick.row.player_id]) continue;
@@ -693,6 +803,30 @@ function total() {
   return Math.round(sum * 10) / 10;
 }
 
+// The end screen, written once and used twice: for the run you just played,
+// and for a lineup that arrived in a link.
+//
+// The score read as a season. A team that really finished there says more
+// than the number does -- and above the record there is no team to name,
+// which says more still.
+function showVerdict(tail) {
+  var season = seasonFor(total());
+
+  document.getElementById("verdict").innerHTML =
+    "<strong>" + season.wins + "&ndash;" + season.losses + "</strong>" +
+    "<span class='verdict-team" + (season.team ? "" : " is-unheard") + "'>" +
+      (season.team
+        ? "like the " + season.team
+        : season.wins === GAMES
+          ? "a perfect season. Nobody has ever come close."
+          : "better than any team in NBA history") +
+    "</span>" +
+    teamLine() +
+    "<span class='verdict-tail'>" + tail + "</span>";
+
+  document.getElementById("finish").hidden = false;
+}
+
 function finish() {
   state.over = true;
 
@@ -711,13 +845,6 @@ function finish() {
     return state.roster[position];
   }).length;
 
-  // The score read as a season. A team that really finished there says more
-  // than the number does.
-  var season = seasonFor(final);
-  var text =
-    "<strong>" + season.wins + "&ndash;" + season.losses + "</strong>" +
-    "<span class='verdict-team'>like the " + season.team + "</span>";
-
   var tail = "You scored " + final;
   if (filled < POSITIONS.length) {
     tail +=
@@ -728,10 +855,7 @@ function finish() {
   }
 
   tail += record ? " A new best." : " Your best is " + best + ".";
-  text += "<span class='verdict-tail'>" + tail + "</span>";
-
-  document.getElementById("verdict").innerHTML = text;
-  document.getElementById("finish").hidden = false;
+  showVerdict(tail);
 }
 
 function useLifeline(name) {
@@ -750,6 +874,8 @@ function useLifeline(name) {
     state.doubleDip = null;
     deal();
   } else if (name === "reveal") {
+    // sortDeck() reads this on the way to the screen, so turning it on is all
+    // there is to do -- the board re-sorts itself by worth from here on.
     state.revealed = true;
   } else if (name === "double") {
     if (openPositions().length < 2) return;
@@ -798,9 +924,11 @@ function swapYears() {
     return choices[Math.floor(Math.random() * choices.length)];
   });
 
-  // Left in the order they were already in, not re-sorted by salary. You
-  // spent the lifeline because you knew where the names were; moving them
-  // around afterwards would make you find them all over again.
+  // The board re-sorts afterwards, so the names do move. Keeping them still
+  // was meant to save you a second search, but it was saving the wrong thing:
+  // every card now holds a different season at a different salary, so the row
+  // you memorised was gone anyway. An order you can trust is worth more than
+  // a position you can no longer read.
 
   if (!state.deck.some(canPick)) deal();
 }
@@ -836,6 +964,125 @@ function sellPick(position) {
 // playing with the answers up, or you spent the reveal on this board.
 function boardRevealed() {
   return showScores || state.revealed;
+}
+
+// A card is a season at a position, so all three go in the key: the same man
+// turned over as a centre is not the one you turned over as a forward.
+function cardKey(card) {
+  return card.row.player_id + "|" + card.row.season + "|" + card.pos;
+}
+
+function peeked(card) {
+  return boardRevealed() || !!state.peeked[cardKey(card)];
+}
+
+function peek(card) {
+  if (state.over || state.peeks <= 0 || peeked(card) || !canPick(card)) return;
+
+  state.peeked[cardKey(card)] = true;
+  state.peeks--;
+  paint();
+}
+
+// --- Sharing a lineup ------------------------------------------------------
+
+// There is no server here, so the team has to travel inside the link itself.
+//
+// Each man is his id, his season and the box he stood in -- "curryst01.2016.0"
+// -- and the five are joined by tildes. About eighty characters, which fits
+// anywhere you would paste a link. Nothing else is stored: the salary and the
+// score are worked out again from the data at the other end, so a link cannot
+// carry a number the game would not have given you.
+function shareCode() {
+  return POSITIONS.map(function (position) {
+    var pick = state.roster[position];
+    if (!pick) return "";
+    return pick.row.player_id + "." + pick.row.season + "." + POSITIONS.indexOf(position);
+  })
+    .filter(Boolean)
+    .join("~");
+}
+
+function shareLink() {
+  return location.origin + location.pathname + "#team=" + shareCode();
+}
+
+function rosterFromCode(code) {
+  var roster = {};
+
+  code.split("~").forEach(function (part) {
+    var bits = part.split(".");
+    var position = POSITIONS[Number(bits[2])];
+    if (!position) return;
+
+    // The card has to exist at that position, which quietly throws out a link
+    // somebody has edited into a lineup the game would never deal.
+    var card = cardFor[bits[0] + "|" + bits[1] + "|" + position];
+    if (!card) return;
+
+    roster[position] = {
+      row: card.row,
+      score: card.score,
+      price: card.price,
+      pos: position,
+      alt: card.alt,
+    };
+  });
+
+  return roster;
+}
+
+function showShared(code) {
+  var roster = rosterFromCode(code);
+  var men = POSITIONS.filter(function (position) {
+    return roster[position];
+  });
+  if (!men.length) return false;
+
+  var spent = men.reduce(function (total, position) {
+    return total + roster[position].price;
+  }, 0);
+
+  state = {
+    budget: Math.round((BUDGET - spent) * 10) / 10,
+    roster: roster,
+    round: POSITIONS.length + 1,
+    deck: [],
+    over: true,
+    gone: {},
+    used: {},
+    revealed: false,
+    doubleDip: null,
+    selling: false,
+    peeks: 0,
+    peeked: {},
+  };
+
+  document.getElementById("deck").innerHTML = "";
+  document.getElementById("again").textContent = "Build your own";
+
+  // Everything a visitor cannot use goes: the table, the lifelines, the money
+  // meters, the switch that hides scores. None of them do anything once the
+  // run is over, and a screen full of dead controls is a screen nobody reads.
+  //
+  // Hidden by class rather than by the hidden attribute, because the deck head
+  // and the switch are both display:flex and a stylesheet rule beats it.
+  document.getElementById("top").classList.add("is-shared");
+
+  // A visitor did not play this run, so the screen is read in the other
+  // order: the record first, because that is the claim being made, and the
+  // five men underneath as the evidence. During a game the lineup comes first
+  // because you are still filling it in.
+  var game = document.getElementById("game");
+  game.classList.add("is-shared");
+  game.insertBefore(document.getElementById("finish"), document.getElementById("roster"));
+
+  paint();
+  showVerdict(
+    "Somebody built this with " + money(BUDGET - state.budget) +
+    " of the " + money(BUDGET) + " cap."
+  );
+  return true;
 }
 
 // --- Drawing ---------------------------------------------------------------
@@ -897,8 +1144,19 @@ function paintRoster() {
     if (pick) {
       slot.innerHTML =
         "<span class='slot-pos'>" + position + "</span>" +
+        // Smaller than the card's, because the lineup is five across and the
+        // deck underneath still has to fit on the screen.
+        photoTag(pick.row, "slot-photo") +
         "<span class='slot-name'>" + pick.row.player + "</span>" +
         "<span class='slot-season'>" + pick.row.season + " " + pick.row.team + "</span>" +
+        // Both his positions, his own one first, exactly as the card had it.
+        // Once he is in a box you can no longer see what else he covers, and
+        // whether the box he is in is the one worth two more.
+        (pick.alt
+          ? "<span class='slot-plays'>" +
+              pick.row.pos + "<span class='slot-plays-alt'>/" + otherSlot(pick) + "</span>" +
+            "</span>"
+          : "") +
         // The same line the card carried. Once a man is in the lineup his
         // numbers are still worth checking -- that is how you work out why
         // the score came out the way it did.
@@ -952,6 +1210,8 @@ function paintDeck() {
   var box = document.getElementById("deck");
   box.innerHTML = "";
 
+  sortDeck();
+
   state.deck.forEach(function (card, index) {
     var pickable = canPick(card);
     var el = document.createElement("button");
@@ -959,19 +1219,9 @@ function paintDeck() {
     el.className = "card" + (pickable ? "" : " is-broke");
     el.disabled = !pickable;
 
-    var slot = slotFor(card);
-    var first = slot || card.row.pos;
-    var second = first === card.row.pos ? otherSlot(card) : card.row.pos;
-
-    el.title =
-      first === card.row.pos
-        ? "His own position: +" + NATURAL_BONUS
-        : "Playing out of position, worth exactly what the season was worth";
+    var first = landingSlot(card);
 
     el.innerHTML =
-      // The box he would actually go in comes first. Since that is his own
-      // position whenever it is free, the card needs no marking: first place
-      // named is where he belongs, and the bonus comes with it.
       // His own position first, always, whatever the lineup looks like. The
       // card said different things at different moments before -- "PF/C" for
       // a power forward one round and for a displaced centre the next -- and
@@ -982,12 +1232,14 @@ function paintDeck() {
         (card.alt ? "<span class='card-alt'>/" + otherSlot(card) + "</span>" : "") +
         (slotOpen(card) ? "" : " <span class='card-why'>filled</span>") +
       "</span>" +
+      // Fifteen names on a board is a spreadsheet. Fifteen faces is a draft.
+      photoTag(card.row, "card-photo") +
       "<span class='card-name'>" + card.row.player + "</span>" +
       "<span class='card-season'>" + card.row.season + " " + card.row.team + "</span>" +
       statLine(card.row) +
       "<span class='card-price'>" + money(card.price) +
         "<span class='tag'>salary</span></span>" +
-      (boardRevealed()
+      (peeked(card)
         ? "<span class='card-worth'>" + worth(card, first) + "<span class='tag'>score</span></span>"
         : "");
 
@@ -995,7 +1247,28 @@ function paintDeck() {
       choose(index);
     });
 
-    box.appendChild(el);
+    // The card is a button, and a button cannot hold another one, so the two
+    // sit side by side inside a wrapper and the glass is placed over the
+    // corner of the card.
+    var wrap = document.createElement("div");
+    wrap.className = "card-wrap";
+    wrap.appendChild(el);
+
+    // Only on cards you could actually take. A look you cannot act on is a
+    // look wasted, and there are five of them.
+    if (pickable && !peeked(card) && state.peeks > 0 && !state.over) {
+      var glass = document.createElement("button");
+      glass.type = "button";
+      glass.className = "peek";
+      glass.innerHTML = "&#128269;";
+      glass.title = "Look at this one's score (" + state.peeks + " left)";
+      glass.addEventListener("click", function () {
+        peek(card);
+      });
+      wrap.appendChild(glass);
+    }
+
+    box.appendChild(wrap);
   });
 }
 
@@ -1007,17 +1280,73 @@ function money(amount) {
 
 // Everything the price does not already tell you. Price is built from points,
 // so points alone would say nothing new -- the rest is where a bargain hides.
+// What the five of them do in a night, added up.
+//
+// Counting stats simply add: five men who each grab nine boards grab
+// forty-five. Shooting does not -- a team that misses everything from one
+// corner and makes everything from the other did not shoot 50%. So the
+// percentage is rebuilt from the shots themselves: every make the five took,
+// counting a three as one and a half, over every attempt.
+function teamLine() {
+  var men = POSITIONS.map(function (position) {
+    return state.roster[position];
+  }).filter(Boolean);
+
+  function sum(key) {
+    return men.reduce(function (total, pick) {
+      return total + (number(pick.row, key) || 0);
+    }, 0);
+  }
+
+  var attempts = sum("fga_per_game");
+  var makes = sum("fg_per_game") + 0.5 * sum("x3p_per_game");
+  var efg = attempts ? Math.round((makes / attempts) * 100) + "%" : "—";
+
+  function round(value) {
+    return Math.round(value * 10) / 10;
+  }
+
+  return (
+    "<span class='verdict-team-line'>" +
+      "<span class='card-line'>" +
+        cell(round(sum("pts_per_game")), "pts") +
+        cell(round(sum("trb_per_game")), "reb") +
+        cell(round(sum("ast_per_game")), "ast") +
+      "</span>" +
+      "<span class='card-line'>" +
+        cell(round(sum("stl_per_game")), "stl") +
+        cell(round(sum("blk_per_game")), "blk") +
+        cell(efg, "eFG") +
+      "</span>" +
+    "</span>"
+  );
+}
+
+// Three to a row, each in its own column.
+//
+// They used to be one run of text separated by dots, which wrapped onto a
+// second line as soon as the numbers ran long -- so one card in a row grew
+// taller and dragged the whole row with it. Columns cannot wrap, and they
+// line the numbers up across every card on the board as a bonus.
 function statLine(row) {
   return (
     "<span class='card-line'>" +
-      stat(row, "pts_per_game") + " pts &middot; " +
-      stat(row, "trb_per_game") + " reb &middot; " +
-      stat(row, "ast_per_game") + " ast" +
+      cell(stat(row, "pts_per_game"), "pts") +
+      cell(stat(row, "trb_per_game"), "reb") +
+      cell(stat(row, "ast_per_game"), "ast") +
     "</span>" +
     "<span class='card-line'>" +
-      stat(row, "stl_per_game") + " stl &middot; " +
-      stat(row, "blk_per_game") + " blk &middot; " +
-      percent(row, "e_fg_percent") + " eFG" +
+      cell(stat(row, "stl_per_game"), "stl") +
+      cell(stat(row, "blk_per_game"), "blk") +
+      cell(percent(row, "e_fg_percent"), "eFG") +
+    "</span>"
+  );
+}
+
+function cell(value, label) {
+  return (
+    "<span class='stat'>" + value +
+      "<span class='stat-label'>" + label + "</span>" +
     "</span>"
   );
 }
@@ -1035,7 +1364,47 @@ function percent(row, key) {
   return value === null ? "—" : Math.round(value * 100) + "%";
 }
 
-document.getElementById("again").addEventListener("click", startRun);
+document.getElementById("again").addEventListener("click", function () {
+  // Clear the shared team out of the address bar, or a refresh would drop you
+  // back into somebody else's lineup.
+  if (location.hash) location.hash = "";
+
+  var game = document.getElementById("game");
+  game.classList.remove("is-shared");
+  document.getElementById("top").classList.remove("is-shared");
+  game.appendChild(document.getElementById("finish"));
+  document.getElementById("again").textContent = "Play again";
+  startRun();
+});
+
+document.getElementById("share").addEventListener("click", function () {
+  var button = document.getElementById("share");
+  var link = shareLink();
+
+  function done(message) {
+    button.textContent = message;
+    setTimeout(function () {
+      button.textContent = "Copy link to this team";
+    }, 2000);
+  }
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(link).then(
+      function () {
+        done("Copied");
+      },
+      function () {
+        // Clipboard refused -- put the link in the address bar instead, where
+        // it can at least be copied by hand.
+        location.hash = "team=" + shareCode();
+        done("In the address bar");
+      }
+    );
+  } else {
+    location.hash = "team=" + shareCode();
+    done("In the address bar");
+  }
+});
 
 Array.prototype.forEach.call(
   document.getElementById("lifelines").children,

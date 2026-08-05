@@ -79,6 +79,19 @@ var RECORDS = [
   [69, "1996-97 Chicago Bulls"],
   [72, "1995-96 Chicago Bulls"],
   [73, "2015-16 Golden State Warriors"],
+
+  // Past the real record. Nobody has ever won a 74th game, so there is no
+  // team to name -- which is the point of the top of the ladder. 82-0 is the
+  // season nobody has come close to, and the reason this game exists.
+  [74, null],
+  [75, null],
+  [76, null],
+  [77, null],
+  [78, null],
+  [79, null],
+  [80, null],
+  [81, null],
+  [82, null],
 ];
 
 var GAMES = 82;
@@ -87,21 +100,27 @@ var GAMES = 82;
 //
 //   55 -> 9 wins    the worst season anybody has had
 //   96 -> 41 wins   dead average, and what random picking scores
-//  175 -> 73 wins   hard, but a run that can actually happen
+//  175 -> 73 wins   the real record: hard, but a run that can happen
+//  200 -> 82 wins   nobody, ever
 //
-// The two halves have different slopes on purpose. Below average a point is
-// worth 0.78 wins and above it only 0.41, because the top is meant to be a
-// climb: 50 wins is the bargain hunter's ordinary day, 73 is not.
+// Each stretch is flatter than the one below it. A point is worth 0.78 wins
+// while you are climbing out of the basement, 0.41 on the way to the record,
+// and 0.36 past it, so every win costs more than the one before. That is the
+// shape a record should have.
 //
-// The top anchor was 185 first, which was the best score ever measured. That
-// turned out to be the wrong place for it: the perfect lineup the whole league
-// could make is 203.9, but you only ever see fifteen cards a round, and three
-// thousand robot runs topped out at 169.7. A target nobody reaches is not a
-// target. 175 is above every run so far and below what a lucky one could do.
+// Both top anchors have been moved by measurement rather than by feel. 185
+// was the first, chosen because it was the best score ever seen -- but three
+// thousand robot runs had topped out at 169.7, so it came down to 175. Then
+// 82-0 went in at 215, twelve points under a perfect draft, and four thousand
+// runs of a robot that hunts the best card and spends lifelines on bad boards
+// never once passed 195. Out of reach is not a target either. At 200 the same
+// robot gets there about once in a few thousand runs, and a person holding
+// five lifelines and five looks has better odds than that.
 var ANCHORS = [
   { score: 55, wins: 9 },
   { score: 96, wins: 41 },
   { score: 175, wins: 73 },
+  { score: 200, wins: 82 },
 ];
 
 function winsFor(score) {
@@ -123,8 +142,9 @@ function winsFor(score) {
   return high.wins;
 }
 
-// The nearest record anybody actually finished with -- which is how 70 and 71
-// are skipped without a special case.
+// The nearest rung on the ladder -- which is how 70 and 71, the two totals
+// nobody has ever finished on, are skipped without a special case. Above 73
+// the team is null: there is nobody to name up there.
 function seasonFor(score) {
   var wins = winsFor(score);
   var best = RECORDS[0];

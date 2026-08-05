@@ -121,13 +121,21 @@ function findSeason(side) {
 
 function playerHeading(row) {
   if (!row) return "—";
-  return row.player + "<span class='season'>" + row.season + " " + row.team + "</span>";
+  // The face first. Two names side by side is a table; two faces side by side
+  // is a match-up, which is what this page is actually for.
+  return (
+    photoTag(row, "compare-photo") +
+    row.player +
+    "<span class='season'>" + row.season + " " + row.team + "</span>"
+  );
 }
 
 function formatPlace(place) {
-  // null: the honour did not exist that season. "": it existed, he missed it.
-  if (place === null) return "—";
-  if (place === "") return "no";
+  // Two kinds of nothing -- the honour did not exist that season (null), or
+  // it did and he was not picked ("") -- and one dash for both, because the
+  // page already uses a dash wherever there is nothing to report. The word
+  // "no" sat in the row looking like an answer to a question nobody asked.
+  if (place === null || place === "") return "—";
   return place + " team";
 }
 
@@ -260,7 +268,22 @@ function addRatingRow(body, a, b) {
   tr.className = "rating-row";
   tr.innerHTML =
     "<td>" + (totalA === null ? "—" : totalA) + "</td>" +
-    "<td class='stat-name'>Score</td>" +
+    // What the Score is, kept out of the way until asked for. It was a
+    // paragraph under the table, which meant everyone read it once and then
+    // scrolled past it forever. On the word itself it is there the moment you
+    // wonder what the number means.
+    "<td class='stat-name'>" +
+      "<span class='explained'>Score" +
+        "<span class='explains'>" +
+          "The points a player generates minus the points he gives away, " +
+          "with scoring weighted by how efficiently he shot. He also gets " +
+          "credit for how the season's awards went — MVP and Defensive " +
+          "Player of the Year votes, All-NBA and All-Defensive teams — and " +
+          "for his Win Shares, meaning how many of his team's wins were " +
+          "his own." +
+        "</span>" +
+      "</span>" +
+    "</td>" +
     "<td>" + (totalB === null ? "—" : totalB) + "</td>";
 
   if (totalA !== null && totalB !== null) {
