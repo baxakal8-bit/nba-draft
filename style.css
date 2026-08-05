@@ -46,19 +46,29 @@ h1 {
   flex-wrap: wrap;
 }
 
+/* Drawn as a button rather than a word. A grey link beside a grey heading is
+   invisible, and this is the only way to the other half of the project. */
 .switch {
-  margin-left: 14px;
-  font-size: 0.7rem;
+  display: inline-block;
+  margin-left: 16px;
+  padding: 7px 13px;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 7px;
   text-decoration: none;
   white-space: nowrap;
+  vertical-align: 2px;
+  transition: border-color 0.12s ease, color 0.12s ease;
 }
 
 .switch:hover {
   color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* --- the two pickers --- */
