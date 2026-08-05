@@ -1,3 +1,58 @@
+## 2026-08-05 — 6. oturum
+**Bugünün işi:** 73-9'un üstünü açmak
+
+**Ne yaptım:** 73-9 tavandı, 175 puanın üstündeki her şey aynı yazıyordu.
+Teorik en iyi kadro 227 puan ediyor, yani 52 puan boşa gidiyordu. Merdiveni
+82-0'a kadar uzattık: 74-8, 75-7 diye devam ediyor, en tepede kimsenin
+yapmadığı 82-0 var. 70 ve 71 hâlâ atlanıyor çünkü gerçekten de hiçbir takım
+o kadar kazanmamış.
+
+82-0 için gereken puanı önce 215 koyduk, robot 4000 oyunda bir kez bile
+geçemedi. Ölçüp 200'e indirdik — ulaşılamayan hedef hedef değil.
+
+Sonra fotoğrafları ekledim. `player_id` zaten Basketball Reference'ın
+fotoğraf dosya adıymış, yani ayrı bir eşleştirme tablosuna gerek yok.
+Tarayıcı indirdiği dosyayı diske yazamadığı için kendi web sunucumu yazdım
+(`tools/serve.js`) — ilk isteyende kaynaktan çekiyor, sonra diskten veriyor.
+Fotoğrafı olmayan oyuncu için siluet koyduk, yoksa tarayıcı kendi kırık
+resim ikonunu basıyor ve kart yamuluyordu.
+
+Günün geri kalanı: kart istatistikleri okunmuyordu (kontrast 4.84:1'di,
+16.08:1 yaptık ve üç sütuna dizdik), dürbün jokeri (bir oyunda beş kez tek
+bir kartın puanına bakabilirsin), yan pozisyon kartları (PG dolu olsa bile
+Luka çıkabiliyor — PG'deki adamı taşıyıp yerini açabilirsin), pozisyon
+havuzlarını dengeledik (pivot havuzu PG'nin iki katıydı), takımı link olarak
+paylaşma, ve karşılaştırıcıdaki açıklamayı hover'a taşıdık.
+
+En sonunda proje **internete çıktı**: github.com/baxakal8-bit/nba-draft ve
+baxakal8-bit.github.io/nba-draft
+
+**Ne bozdum / yanlış yaptım:** Cloudflare Pages'e yayınladık ama site
+açılmadı, sonsuza kadar döndü. Kodda hata yoktu — internet sağlayıcım
+(Superonline) `pages.dev` adresini engelliyormuş. DNS sorduğumuzda
+Cloudflare'in adresi yerine Superonline'ın kendi sunucusunu veriyordu.
+1.1.1.1 ve 8.8.8.8 de engelliymiş. GitHub Pages'e taşıyınca açıldı.
+
+Bir de takım rekoru listesini eskiden yapay zekâya sordurmuştum, bu oturumda
+onun 63 satırından 29'unun yanlış olduğu ortaya çıkmıştı — gerçek veriyle
+karşılaştırınca. O ders bugün tekrar işe yaradı: usage fikrimi de ölçtük,
+MVP testini kazandı ama mantığı sağlam değildi ve kendim vazgeçtim.
+
+**Yarım kalan:** Sayfa ilk açılışta 4-5 saniye boş duruyor, 4.7MB veri
+iniyor. "Loading data..." yazsa daha iyi olur.
+
+**Babama sorum:** yok
+
+**Keyif:** evet
+
+**Kavram kontrolü:**
+- Top kaybını usage'a bölmek → fikri kendi buldu, itirazı duyunca kendi
+  vazgeçti (test kazanmasına rağmen) ✅
+- Neden site açılmıyor → DNS'i görünce anladı, "kodda hata yok" kısmı oturdu 🔸
+- Fotoğraf için neden ayrı sunucu gerekti → kendi çözdü, kendi yazdı ✅
+
+---
+
 ## 2026-08-03 — 5. oturum
 **Bugünün işi:** 60'ların ribaundunu düzeltmek
 
@@ -255,3 +310,9 @@ bozuldu, o yüzden basit halde bıraktık ve sayfada açıkça yazdık.
 - veriyi kaynağıyla doğrulamak — 3 Ağu ✅
 - bağlayıcı olmayan kısıt (parayı harcayamamak) — 3 Ağu 🔸
 - çalışan ama yanlış kod — 3 Ağu 🔸
+- DNS ve alan adı engelleme — 5 Ağu 🔸
+- kontrast oranı (okunabilirlik ölçüsü) — 5 Ağu ✅
+- statik site yayınlamak (git push = yayın) — 5 Ağu ✅
+- lisans (kod açık ama izin ayrı bir şey) — 5 Ağu 🔸
+- başkasının dosyasını kopyalamak vs adres vermek — 5 Ağu 🔸
+- testi kazanan fikri mantığı yüzünden reddetmek — 5 Ağu ✅
